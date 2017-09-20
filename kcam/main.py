@@ -121,6 +121,8 @@ class KCam:
         self.armed = False
         self.cooldown = False
         self.cooldown_interval = cooldown_interval
+        self.record_interval = record_interval
+        self.record_limit = record_limit
 
         self.disarm()
 
