@@ -176,6 +176,7 @@ class KCam:
             interval=self.record_interval,
             function=self.stop_active,
             limit=self.record_limit)
+        self.timer.start()
 
     def continue_active(self):
         LOG.info('continue activity')
@@ -193,6 +194,7 @@ class KCam:
         self.timer = timer.DynamicTimer(
             interval=self.cooldown_interval,
             function=self.stop_cooldown)
+        self.timer.start()
 
     def stop_cooldown(self):
         LOG.info('end cooldown period')
