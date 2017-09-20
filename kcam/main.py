@@ -100,7 +100,7 @@ class KCam:
                  act_led_pin=None,
                  arm_btn_pin=None,
                  arm_delay=None,
-                 cooldown_interval=None,
+                 cooldown_interval=60,
                  record_interval=10,
                  record_limit=300):
 
