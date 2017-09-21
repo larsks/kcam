@@ -30,7 +30,7 @@ class DynamicTimer(threading.Thread):
 
             now = time.time()
             if now >= self.expires_at:
-                LOG.debug('timer expired %s', self)
+                LOG.debug('timer %s expired', self)
                 break
 
             if self.limit and now >= self.expires_limit:
@@ -41,11 +41,10 @@ class DynamicTimer(threading.Thread):
 
     def update(self, extra):
         if not self.is_alive():
-            self.interval += extra
-            LOG.debug('+%d to inactive timer %s', extra, self)
-        else:
-            self.expires_at += extra
-            LOG.debug('+%d to active timer %s', extra, self)
+            raise ValueError('attempt to update idle timer')
+
+        self.expires_at += extra
+        LOG.debug('+%d to active timer %s', extra, self)
 
     def __str__(self):
         if self.expires_at is None:
