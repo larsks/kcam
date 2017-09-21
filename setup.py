@@ -9,6 +9,7 @@ setup(
     packages=['kcam'],
     install_requires=[
         'RPi.GPIO',
+        'Adafruit_Python_DHT',
     ],
     entry_points={
         'console_scripts': [
