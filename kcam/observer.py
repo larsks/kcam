@@ -1,5 +1,8 @@
 import abc
+import logging
 import threading
+
+LOG = logging.getLogger(__name__)
 
 
 def synchronized(func):
@@ -23,7 +26,7 @@ class Synchronization(object):
 class Observer(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
-    def update(self, who, value):
+    def update(self, arg):
         pass
 
 
@@ -52,8 +55,10 @@ class Observable(Synchronization):
         self.observers = set()
 
     def notify_observers(self, arg=None):
+        LOG.info('sending notifications')
         with self.mutex:
             obs = list(self.observers)
 
         for observer in obs:
+            LOG.debug('notifying %s', observer)
             observer(arg)
