@@ -31,7 +31,7 @@ class ActivitySensor(observer.Observable, observer.Observer):
 
     def stop(self):
         LOG.info('stop activity sensor')
-        self.source.remove_observer(self)
+        self.source.delete_observer(self)
 
     def update(self, arg):
         if self.active == STATE_COOLDOWN:
@@ -71,5 +71,5 @@ class ActivitySensor(observer.Observable, observer.Observer):
         self.timer.start()
 
     def end_cooldown(self):
-        LOG.active('end cooldown')
+        LOG.info('end cooldown')
         self.active = STATE_IDLE
