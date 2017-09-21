@@ -1,9 +1,8 @@
 import Adafruit_DHT
 import logging
 import threading
-from collections import namedtuple
 
-from . import observer
+from kcam import observer
 
 LOG = logging.getLogger(__name__)
 
@@ -14,18 +13,19 @@ sensors = {
 }
 
 
-TemperatureReading = namedtuple('TemperatureReading',
-                                ['humidity', 'temperature'])
-
-
 class TemperatureSensor(observer.Observable, threading.Thread):
-    def __init__(self, pin, sensor='DHT22', read_interval=10, **kwargs):
+    def __init__(self, pin,
+                 sensor='DHT22',
+                 read_interval=10,
+                 **kwargs):
         super(TemperatureSensor, self).__init__(**kwargs)
         self.read_interval = read_interval
         self.pin = pin
         self.sensor = sensors[sensor]
-        self._value = (None, None)
         self.evt_quit = threading.Event()
+
+        self.temperature = None
+        self.humidity = None
 
     def quit(self):
         self.evt_quit.set()
@@ -41,8 +41,11 @@ class TemperatureSensor(observer.Observable, threading.Thread):
                 LOG.debug('got humidity = %f, temp = %f',
                           humidity, temperature)
                 with self.mutex:
-                    self._value = TemperatureReading(humidity, temperature)
-                    self.notify_observers(self._value)
+                    self.temperature = temperature
+                    self.humidity = humidity
+
+                self.notify_observers(self.value)
+
             else:
                 LOG.error('failed to read temperature sensor')
 
@@ -51,6 +54,8 @@ class TemperatureSensor(observer.Observable, threading.Thread):
 
         LOG.info('stopping temperature sensor on pin %d', self.pin)
 
+    @property
     def value(self):
         with self.mutex:
-            return self._value
+            return dict(temperature=self.temperature,
+                        humidity=self.humidity)

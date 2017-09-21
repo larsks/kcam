@@ -11,6 +11,10 @@ class MetricListener(observer.Observer):
     def __init__(self, client, name, tags=None):
         self.client = client
         self.name = name
+
+        if tags is None:
+            tags = {}
+
         self.tags = tags
 
     def update(self, arg):
