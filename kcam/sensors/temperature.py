@@ -27,7 +27,7 @@ class TemperatureSensor(observer.Observable, threading.Thread):
         self.temperature = None
         self.humidity = None
 
-    def quit(self):
+    def stop(self):
         self.evt_quit.set()
 
     def run(self):
