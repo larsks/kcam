@@ -15,7 +15,7 @@ class MetricListener(observer.Observer):
 
     def update(self, arg):
         if not isinstance(arg, dict):
-            raise ValueError('update argument must be a dictionary')
+            arg = {'value': arg}
 
         LOG.info('metric %s = %s', self.name, arg)
         self.client.write_points([
