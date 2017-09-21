@@ -1,5 +1,4 @@
 import logging
-import time
 
 from kcam.timer import DynamicTimer
 from kcam import observer
@@ -54,6 +53,7 @@ class ActivitySensor(observer.Observable, observer.Observer):
             interval=self.interval,
             function=self.end_active,
             limit=self.limit)
+        self.timer.start()
 
     def continue_active(self):
         LOG.debug('continue activity')
@@ -68,6 +68,7 @@ class ActivitySensor(observer.Observable, observer.Observer):
         self.timer = DynamicTimer(
             interval=self.cooldown,
             function=self.end_cooldown)
+        self.timer.start()
 
     def end_cooldown(self):
         LOG.active('end cooldown')
