@@ -48,7 +48,7 @@ class ActivitySensor(observer.Observable, observer.Observer):
     def start_active(self):
         LOG.debug('start activity')
         self.active = STATE_ACTIVE
-        self.notify_observers(True)
+        self.notify_observers(1)
 
         self.timer = DynamicTimer(
             interval=self.interval,
@@ -63,7 +63,7 @@ class ActivitySensor(observer.Observable, observer.Observer):
     def end_active(self):
         LOG.debug('end activity')
         self.active = STATE_COOLDOWN
-        self.notify_observers(False)
+        self.notify_observers(0)
 
         LOG.debug('cooldown for %d seconds', self.cooldown)
         self.timer = DynamicTimer(
@@ -74,3 +74,7 @@ class ActivitySensor(observer.Observable, observer.Observer):
     def end_cooldown(self):
         LOG.info('end cooldown')
         self.active = STATE_IDLE
+
+    @property
+    def value(self):
+        return self.active == STATE_ACTIVE
