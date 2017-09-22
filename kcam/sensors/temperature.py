@@ -22,17 +22,17 @@ class TemperatureSensor(observer.Observable, threading.Thread):
         self.read_interval = read_interval
         self.pin = pin
         self.sensor = sensors[sensor]
-        self.evt_quit = threading.Event()
+        self.evt_stop = threading.Event()
 
         self.temperature = None
         self.humidity = None
 
     def stop(self):
-        self.evt_quit.set()
+        self.evt_stop.set()
 
     def run(self):
         LOG.info('starting temperature sensor on pin %d', self.pin)
-        self.evt_quit.clear()
+        self.evt_stop.clear()
 
         while True:
             humidity, temperature = Adafruit_DHT.read_retry(
@@ -49,7 +49,7 @@ class TemperatureSensor(observer.Observable, threading.Thread):
             else:
                 LOG.error('failed to read temperature sensor')
 
-            if self.evt_quit.wait(self.read_interval):
+            if self.evt_stop.wait(self.read_interval):
                 break
 
         LOG.info('stopping temperature sensor on pin %d', self.pin)

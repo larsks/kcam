@@ -12,7 +12,8 @@ STATE_COOLDOWN = 3
 
 class ActivitySensor(observer.Observable, observer.Observer):
     def __init__(self, source,
-                 interval=10,
+                 interval=20,
+                 update=10,
                  limit=120,
                  cooldown=30,
                  **kwargs):
@@ -57,7 +58,7 @@ class ActivitySensor(observer.Observable, observer.Observer):
 
     def continue_active(self):
         LOG.debug('continue activity')
-        self.timer.update(self.interval)
+        self.timer.extend(self.interval)
 
     def end_active(self):
         LOG.debug('end activity')

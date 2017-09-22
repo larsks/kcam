@@ -224,7 +224,7 @@ class KCam:
 
     def continue_active(self):
         LOG.info('continue activity')
-        self.timer.update(self.record_interval)
+        self.timer.extend(self.record_interval)
 
     def stop_active(self):
         LOG.info('stop activity')

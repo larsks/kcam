@@ -15,18 +15,28 @@ class DynamicTimer(threading.Thread):
         self.function = function
         self.interval = interval
         self.limit = limit
+        self.started_at = None
         self.expires_at = None
+        self.evt_stop = threading.Event()
+
+    def stop(self):
+        self.evt_stop.set()
 
     def run(self):
-        self.expires_at = time.time() + self.interval
+        now = time.time()
+
+        self.started_at = now
+        self.expires_at = now + self.interval
         if self.limit:
-            self.expires_limit = time.time() + self.limit
+            self.expires_limit = now + self.limit
 
         LOG.debug('started timer %s', self)
 
         while True:
             sleeptime = self.expires_at - time.time()
-            time.sleep(sleeptime)
+            if self.evt_stop.wait(sleeptime):
+                LOG.info('stopping timer %s', self)
+                return
 
             now = time.time()
             if now >= self.expires_at:
@@ -39,12 +49,13 @@ class DynamicTimer(threading.Thread):
 
         self.function()
 
-    def update(self, extra):
+    def extend(self, extra):
         if not self.is_alive():
             raise ValueError('attempt to update idle timer')
 
-        self.expires_at += extra
-        LOG.debug('+%d to active timer %s', extra, self)
+        self.expires_at = max(self.expires_at,
+                              time.time() + extra)
+        LOG.debug('extended timer %s', self)
 
     def __str__(self):
         if self.expires_at is None:

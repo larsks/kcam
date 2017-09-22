@@ -17,7 +17,7 @@ class TestTimer (unittest.TestCase):
         self.condition.set()
 
     def test_timer_simple(self):
-        interval = 5
+        interval = 2
 
         self.pre_timer()
         t = timer.DynamicTimer(interval,
@@ -30,14 +30,14 @@ class TestTimer (unittest.TestCase):
 
         assert int(interval) == int(t1-t0)
 
-    def test_timer_update(self):
-        interval = 5
+    def test_timer_extend(self):
+        interval = 2
 
         self.pre_timer()
         t = timer.DynamicTimer(interval,
                                self.post_timer)
         t.start()
-        t.update(interval)
+        t.extend(interval * 2)
 
         t0 = time.time()
         self.condition.wait(interval * 3)
