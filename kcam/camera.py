@@ -6,6 +6,8 @@ import picamera
 import queue
 import threading
 
+from kcam import observer
+
 LOG = logging.getLogger(__name__)
 
 
@@ -16,7 +18,7 @@ def fmt_path(path, timestamp=None):
     return path.format(timestamp=timestamp)
 
 
-class Camera(threading.Thread):
+class Camera(observer.Observable, threading.Thread):
 
     def __init__(self,
                  res_x=800,
@@ -119,3 +121,4 @@ class Camera(threading.Thread):
 
         self.recording = False
         LOG.info('finished capture')
+        self.notify_observers(videopath)
