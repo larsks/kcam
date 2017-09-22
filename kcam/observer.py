@@ -55,7 +55,7 @@ class Observable(Synchronization):
         self.observers = set()
 
     def notify_observers(self, arg=None):
-        LOG.info('sending notifications')
+        LOG.debug('sending notifications')
         with self.mutex:
             obs = list(self.observers)
 
