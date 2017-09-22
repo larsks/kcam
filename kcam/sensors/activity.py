@@ -11,28 +11,26 @@ STATE_COOLDOWN = 3
 
 
 class ActivitySensor(observer.Observable, observer.Observer):
-    def __init__(self, source,
-                 interval=20,
-                 update=10,
-                 limit=120,
-                 cooldown=30,
+    default_interval = 20
+    default_extend = 20
+    default_limit = 120
+    default_cooldown = 30
+
+    def __init__(self,
+                 interval=None,
+                 extend=None,
+                 limit=None,
+                 cooldown=None,
                  **kwargs):
 
         super(ActivitySensor, self).__init__(**kwargs)
 
-        self.source = source
-        self.active = 0
-        self.interval = interval
-        self.limit = limit
-        self.cooldown = cooldown
+        self.interval = interval if interval else self.default_interval
+        self.limit = limit if limit else self.default_limit
+        self.extend = extend if extend else self.default_extend
+        self.cooldown = cooldown if cooldown else self.default_cooldown
 
-    def start(self):
-        LOG.info('start activity sensor')
-        self.source.add_observer(self)
-
-    def stop(self):
-        LOG.info('stop activity sensor')
-        self.source.delete_observer(self)
+        self.active = STATE_IDLE
 
     def update(self, arg):
         if self.active == STATE_COOLDOWN:
@@ -58,7 +56,7 @@ class ActivitySensor(observer.Observable, observer.Observer):
 
     def continue_active(self):
         LOG.debug('continue activity')
-        self.timer.extend(self.interval)
+        self.timer.extend(self.extend)
 
     def end_active(self):
         LOG.debug('end activity')

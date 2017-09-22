@@ -1,0 +1,37 @@
+#[leds]
+#det_led_pin = 24
+#act_led_pin = 25
+#pwr_led_pin = 27
+#arm_led_pin = 17
+#
+#[metrics]
+#metrics_host = localhost
+#metrics_port = 8086
+#metrics_database = kcam
+#
+#[camera]
+#camera_flip = true
+#camera_res_x = 800
+#camera_res_y = 600
+#camera_interval = 2
+#camera_datadir={timestamp:%Y/%m/%d/%H-%M-%S}
+#camera_imagename=img-{timestamp:%H-%M-%S}-{{counter}}.jpg
+#camera_videoname=vid-{timestamp:%H-%M-%S}.h264
+#
+#
+#[sensor:activity]
+#activity_interval = 20
+#activity_extend = 10
+#activity_limit = 120
+#activity_cooldown = 30
+#
+#[sensor:temperature]
+#temperature_pin = 12
+#temperature_interval = 10
+#temperature_devicetype=DHT22
+#
+#[sensor:door]
+#door_pin = 4
+#
+#[sensor:motion]
+#motion_pin = 23

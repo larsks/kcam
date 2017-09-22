@@ -7,49 +7,51 @@ from kcam import observer
 LOG = logging.getLogger(__name__)
 
 
-sensors = {
+devices = {
     'DHT22': Adafruit_DHT.DHT22,
     'DHT11': Adafruit_DHT.DHT11,
 }
 
 
-class TemperatureSensor(observer.Observable, threading.Thread):
+class TemperatureSensor(threading.Thread):
+    default_interval = 60
+    default_devicetype = Adafruit_DHT.DHT22
+
     def __init__(self, pin,
-                 sensor='DHT22',
-                 read_interval=10,
+                 devicetype=None,
+                 interval=None,
                  **kwargs):
         super(TemperatureSensor, self).__init__(**kwargs)
-        self.read_interval = read_interval
         self.pin = pin
-        self.sensor = sensors[sensor]
+        self.interval = interval if interval else self.default_interval
+        self.devicetype = (devices[devicetype] if devicetype
+                           else self.default_devicetype)
         self.evt_stop = threading.Event()
 
-        self.temperature = None
-        self.humidity = None
+        self.temperature = observer.Value()
+        self.humidity = observer.Value()
+        self.mutex = threading.RLock()
 
     def stop(self):
         self.evt_stop.set()
 
     def run(self):
         LOG.info('starting temperature sensor on pin %d', self.pin)
-        self.evt_stop.clear()
 
         while True:
             humidity, temperature = Adafruit_DHT.read_retry(
-                self.sensor, self.pin)
+                self.devicetype, self.pin)
             if humidity is not None and temperature is not None:
                 LOG.debug('got humidity = %f, temp = %f',
                           humidity, temperature)
                 with self.mutex:
-                    self.temperature = temperature
-                    self.humidity = humidity
-
-                self.notify_observers(self.value)
+                    self.temperature.set(temperature)
+                    self.humidity.set(humidity)
 
             else:
                 LOG.error('failed to read temperature sensor')
 
-            if self.evt_stop.wait(self.read_interval):
+            if self.evt_stop.wait(self.interval):
                 break
 
         LOG.info('stopping temperature sensor on pin %d', self.pin)
@@ -57,5 +59,5 @@ class TemperatureSensor(observer.Observable, threading.Thread):
     @property
     def value(self):
         with self.mutex:
-            return dict(temperature=self.temperature,
-                        humidity=self.humidity)
+            return dict(temperature=self.temperature.value,
+                        humidity=self.humidity.value)

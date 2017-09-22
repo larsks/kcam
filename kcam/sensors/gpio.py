@@ -5,19 +5,33 @@ from RPi import GPIO
 from kcam import observer
 
 LOG = logging.getLogger(__name__)
-GPIO.setmode(GPIO.BCM)
 
 
 class GPIOSensor(observer.Observable):
-    def __init__(self, pin, edge=GPIO.BOTH, bouncetime=None, **kwargs):
+    def __init__(self, pin,
+                 edge=GPIO.BOTH,
+                 bouncetime=None,
+                 pull_up=False,
+                 pull_down=False,
+                 **kwargs):
+
         super(GPIOSensor, self).__init__(**kwargs)
         self.pin = pin
         self.edge = edge
         self.value = None
         self.bouncetime = bouncetime
+        self.pull_up = pull_up
+        self.pull_down = pull_down
+
+        if self.pull_up:
+            pud = GPIO.PUD_UP
+        elif self.pull_down:
+            pud = GPIO.PUD_DOWN
+        else:
+            pud = GPIO.PUD_OFF
 
         LOG.info('configuring gpio sensor on pin %d', pin)
-        GPIO.setup(pin, GPIO.IN)
+        GPIO.setup(pin, GPIO.IN, pull_up_down=pud)
 
     def start(self):
         kwargs = {}

@@ -11,7 +11,7 @@ class DynamicTimer(threading.Thread):
     can be used to extend the interval while the timer is running.'''
 
     def __init__(self, interval, function, limit=None, **kwargs):
-        super(DynamicTimer, self).__init__(**kwargs)
+        super(DynamicTimer, self).__init__(daemon=True, **kwargs)
         self.function = function
         self.interval = interval
         self.limit = limit

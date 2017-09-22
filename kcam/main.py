@@ -1,263 +1,195 @@
+import argparse
+import configparser
 import logging
-import threading  # NOQA
+import signal
 
 from RPi import GPIO
-from signal import pause
 
-from . import timer
+from kcam.sensors.gpio import GPIOSensor
+from kcam.sensors.activity import ActivitySensor
+from kcam.sensors.temperature import TemperatureSensor
+from kcam.devices.led import LED
+from kcam.devices.blink import Blink
+from kcam.defaults import DEFAULTS
+from kcam.metrics import MetricConnection
+from kcam.camera import Camera
+from kcam.encoder import Encoder
 
-LOG = logging.getLogger('kcam')
+LOG = logging.getLogger(__name__)
+GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 
 
-class LED:
+class KCam(object):
+    required_sections = [
+        'metrics',
+        'camera',
+        'leds',
+        'sensor:motion',
+        'sensor:temperature',
+        'sensor:door',
+        'sensor:activity',
+    ]
 
-    def __init__(self, pin=None):
-        self.pin = int(pin)
-        self.setup_pin()
+    def __init__(self, config):
+        self.config = config
+        self.threads = []
 
-    def setup_pin(self):
-        GPIO.setup(self.pin, GPIO.OUT)
-        GPIO.output(self.pin, 0)
+        self.init_config()
+        self.create_leds()
+        self.create_metrics()
+        self.create_sensors()
+        self.create_camera()
 
-    def on(self):
-        GPIO.output(self.pin, 1)
+    def init_config(self):
+        for section in self.required_sections:
+            if section not in self.config:
+                self.config.add_section(section)
 
-    def off(self):
-        GPIO.output(self.pin, 0)
+    def create_leds(self):
+        self.pwr_led = LED(self.config.getint('leds', 'pwr_led_pin'))
+        self.pwr_led_blink = Blink()
+        self.pwr_led_blink.add_observer(self.pwr_led, self.pwr_led.set)
+        self.threads.append(self.pwr_led_blink)
 
+        self.act_led = LED(self.config.getint('leds', 'act_led_pin'))
+        self.det_led = LED(self.config.getint('leds', 'det_led_pin'))
+        self.arm_led = LED(self.config.getint('leds', 'arm_led_pin'))
 
-class DoorSensor:
+    def create_metrics(self):
+        self.metrics = MetricConnection(
+            host=self.config['metrics'].get('host'),
+            port=self.config['metrics'].get('port'),
+            database=self.config['metrics'].get('database'),
+        )
 
-    def __init__(self, pin=None, on_door_open=None, on_door_close=None):
-        self.pin = int(pin)
-        self.on_door_open = on_door_open
-        self.on_door_close = on_door_close
+    def create_sensors(self):
+        self.motion_sensor = GPIOSensor(
+            self.config.getint('sensor:motion', 'motion_pin'),
+            pull_up=True)
+        self.motion_sensor.add_observer(self.det_led, self.det_led.set)
+        self.motion_sensor.add_observer(self.metrics.create_observer('motion'))
+        self.threads.append(self.motion_sensor)
 
-        self.setup_pin()
+        self.door_sensor = GPIOSensor(
+            self.config.getint('sensor:door', 'door_pin'),
+            pull_up=True)
+        self.door_sensor.add_observer(self.metrics.create_observer('door'))
+        self.threads.append(self.door_sensor)
 
-    def setup_pin(self):
-        GPIO.setup(self.pin, GPIO.IN)
+        self.temp_sensor = TemperatureSensor(
+            self.config.getint('sensor:temperature', 'temperature_pin'),
+            devicetype=self.config['sensor:temperature'].get('temperature_devicetype'),
+            interval=self.config['sensor:temperature'].get('temperature_interval'))
+        self.temp_sensor.temperature.add_observer(self.metrics.create_observer('temperature'))
+        self.temp_sensor.humidity.add_observer(self.metrics.create_observer('humidity'))
+        self.threads.append(self.temp_sensor)
 
-    def enable(self):
-        LOG.info('enabling door sensor on pin %d', self.pin)
-        GPIO.add_event_detect(self.pin, GPIO.BOTH,
-                              callback=self.handler)
+        self.activity_sensor = ActivitySensor(
+            interval=self.config['sensor:activity'].getint('activity_interval'),
+            extend=self.config['sensor:activity'].getint('activity_extend'),
+            limit=self.config['sensor:activity'].getint('activity_limit'),
+            cooldown=self.config['sensor:activity'].getint('activity_cooldown'),
+        )
+        self.activity_sensor.add_observer(self.act_led, self.act_led.set)
+        self.activity_sensor.add_observer(self.metrics.create_observer('activity'))
+        self.motion_sensor.add_observer(self.activity_sensor)
 
-    def disable(self):
-        GPIO.remove_event_detect(self.pin)
+    def create_camera(self):
+        self.camera = Camera(
+            res_x=self.config['camera'].getint('camera_res_x'),
+            res_y=self.config['camera'].getint('camera_res_y'),
+            lead_time=self.config['camera'].getint('camera_lead_time'),
+            datadir=self.config['camera'].get('camera_datadir'),
+            imagename=self.config['camera'].get('camera_imagename'),
+            videoname=self.config['camera'].get('camera_videoname'),
+            interval=self.config['camera'].getint('camera_interval'),
+            flip=self.config['camera'].getboolean('camera_flip'),
+        )
+        self.threads.append(self.camera)
 
-    @property
-    def value(self):
-        return GPIO.input(self.pin)
-
-    def handler(self, pin):
-        LOG.debug('door event on pin %d', pin)
-        if self.on_door_open and self.value:
-            self.on_door_open(self)
-        elif self.on_door_close:
-            self.on_door_close(self)
-
-
-class MotionSensor:
-
-    def __init__(self, pin=None, on_motion=None, on_no_motion=None):
-        self.pin = int(pin)
-        self.on_motion = on_motion
-        self.on_no_motion = on_no_motion
-
-        self.setup_pin()
-
-    def setup_pin(self):
-        GPIO.setup(self.pin, GPIO.IN)
-
-    def enable(self):
-        LOG.info('enabling motion sensors on pin %d', self.pin)
-        GPIO.add_event_detect(self.pin, GPIO.BOTH,
-                              callback=self.handler)
-
-    def disable(self):
-        GPIO.remove_event_detect(self.pin)
-
-    @property
-    def value(self):
-        return GPIO.input(self.pin)
-
-    def handler(self, pin):
-        LOG.debug('motion event on pin %d', pin)
-        if self.on_motion and self.value:
-            self.on_motion(self)
-        elif self.on_no_motion:
-            self.on_no_motion(self)
-
-
-class Button:
-
-    def __init__(self, pin, on_press=None, bouncetime=200):
-        self.pin = pin
-        self.on_press = on_press
-        self.bouncetime = bouncetime
-
-        self.setup_pin()
-
-    def setup_pin(self):
-        GPIO.setup(self.pin, GPIO.IN)
-
-    def enable(self):
-        LOG.info('enabling button on pin %d', self.pin)
-        GPIO.add_event_detect(self.pin, GPIO.RISING,
-                              callback=self.handler,
-                              bouncetime=self.bouncetime)
-
-    def disable(self):
-        GPIO.remove_event_detect(self.pin)
-
-    @property
-    def value(self):
-        return GPIO.input(self.pin)
-
-    def handler(self, pin):
-        LOG.debug('button event on pin %d', pin)
-        if self.value and self.on_press:
-            self.on_press(self)
-
-
-class KCam:
-
-    def __init__(self,
-                 pir_pin=None,
-                 door_pin=None,
-                 pwr_led_pin=None,
-                 arm_led_pin=None,
-                 det_led_pin=None,
-                 act_led_pin=None,
-                 arm_btn_pin=None,
-                 arm_delay=None,
-                 cooldown_interval=60,
-                 record_interval=10,
-                 record_limit=300):
-
-        self.pir_pin = pir_pin
-        self.door_pin = door_pin
-        self.pwr_led = LED(pwr_led_pin)
-        self.arm_led = LED(arm_led_pin)
-        self.act_led = LED(act_led_pin)
-        self.det_led = LED(det_led_pin)
-
-        self.motion = MotionSensor(pir_pin,
-                                   on_motion=self.on_motion,
-                                   on_no_motion=self.on_no_motion)
-        self.arm_btn = Button(arm_btn_pin,
-                              on_press=self.on_arm_button)
-        self.door = DoorSensor(door_pin,
-                               on_door_open=self.on_door_open,
-                               on_door_close=self.on_door_close)
-
-        self.enable_at_startup = [
-            self.arm_btn,
-            self.door,
-        ]
-
-        self.active = False
-        self.arm_delay = arm_delay
-        self.armed = False
-        self.cooldown = False
-        self.cooldown_interval = cooldown_interval
-        self.record_interval = record_interval
-        self.record_limit = record_limit
-
-        self.disarm()
-
-    def enable(self):
-        for sensor in self.enable_at_startup:
-            sensor.enable()
-
-        self.pwr_led.on()
-
-    def disable(self):
-        self.arm_btn.disable()
-        self.pwr_led.off()
+        self.encoder = Encoder()
+        self.camera.add_observer(self.encoder)
+        self.threads.append(self.encoder)
 
     def arm(self):
-        LOG.info('arm')
-        self.arm_led.on()
-        self.motion.enable()
-        self.armed = True
+        self.activity_sensor.add_observer(self.camera)
 
     def disarm(self):
-        LOG.info('disarm')
-        self.motion.disable()
-        self.arm_led.off()
-        self.armed = False
+        self.activity_sensor.delete_observer(self.camera)
 
-    def on_arm_button(self, pin):
-        if self.armed:
-            self.disarm()
-        else:
-            self.arm()
+    def run(self):
+        LOG.info('kcam starting up')
+        for thread in self.threads:
+            thread.start()
 
-    def on_motion(self, pin):
-        LOG.info('motion detected')
-        self.det_led.on()
+        LOG.info('kcam startup complete')
+        try:
+            signal.pause()
+        except KeyboardInterrupt:
+            pass
 
-        if not self.cooldown:
-            if not self.active:
-                self.start_active()
-            else:
-                self.continue_active()
-        else:
-            LOG.info('ignoring motion during cooldown period')
+        LOG.info('kcam shutting down')
+        for thread in self.threads:
+            try:
+                thread.stop()
+            except AttributeError:
+                pass
 
-    def on_no_motion(self, pin):
-        LOG.info('motion not detected')
-        self.det_led.off()
+        LOG.info('kcam shutdown complete')
 
-    def start_active(self):
-        LOG.info('start activity')
-        self.act_led.on()
-        self.active = True
-        self.timer = timer.DynamicTimer(
-            interval=self.record_interval,
-            function=self.stop_active,
-            limit=self.record_limit)
-        self.timer.start()
 
-    def continue_active(self):
-        LOG.info('continue activity')
-        self.timer.extend(self.record_interval)
+def KeyValueArgument(value):
+    try:
+        k, v = value.split('=', 1)
+        return k, v
+    except ValueError:
+        raise argparse.ArgumentError('values must of the form <key>=<value>')
 
-    def stop_active(self):
-        LOG.info('stop activity')
-        self.act_led.off()
-        self.active = False
-        self.start_cooldown()
 
-    def start_cooldown(self):
-        LOG.info('start cooldown period')
-        self.cooldown = True
-        self.timer = timer.DynamicTimer(
-            interval=self.cooldown_interval,
-            function=self.stop_cooldown)
-        self.timer.start()
+def parse_args():
+    p = argparse.ArgumentParser()
 
-    def stop_cooldown(self):
-        LOG.info('end cooldown period')
-        self.cooldown = False
+    p.add_argument('--config', '-f',
+                   default='kcam.conf')
+    p.add_argument('--arm',
+                   action='store_true')
 
-    def on_door_open(self, pin):
-        LOG.info('door open')
+    g = p.add_argument_group('Logging options')
+    g.add_argument('--verbose', '-v',
+                   action='store_const',
+                   const='INFO',
+                   dest='loglevel')
+    g.add_argument('--debug', '-d',
+                   action='store_const',
+                   const='DEBUG',
+                   dest='loglevel')
+    g.add_argument('--set-logger', '-l',
+                   action='append',
+                   default=[],
+                   type=KeyValueArgument)
 
-    def on_door_close(self, pin):
-        LOG.info('door closed')
+    p.set_defaults(loglevel='WARNING')
+
+    return p.parse_args()
 
 
 def main():
-    logging.basicConfig(level='DEBUG')
-    cam = KCam(pir_pin=23, det_led_pin=24, act_led_pin=25,
-               pwr_led_pin=17, arm_led_pin=27, arm_btn_pin=22,
-               door_pin=4)
-    cam.enable()
-    pause()
+    args = parse_args()
+    logging.basicConfig(level=args.loglevel)
+    config = configparser.ConfigParser(defaults=DEFAULTS)
+    config.read(args.config)
+
+    if args.set_logger:
+        for name, level in args.set_logger:
+            logger = logging.getLogger(name)
+            logger.setLevel(level.upper())
+
+    app = KCam(config)
+    if args.arm:
+        app.arm()
+
+    app.run()
 
 
 if __name__ == '__main__':

@@ -1,4 +1,8 @@
+import logging
+
 from RPi import GPIO
+
+LOG = logging.getLogger(__name__)
 
 
 class LED(object):
@@ -18,4 +22,5 @@ class LED(object):
         val = int(val)
         if val < 0 or val > 1:
             raise ValueError('val must be either 0 or 1')
+        LOG.debug('set led on pin %d to %d', self.pin, val)
         GPIO.output(self.pin, val)

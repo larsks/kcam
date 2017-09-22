@@ -62,3 +62,13 @@ class Observable(Synchronization):
         for observer in obs:
             LOG.debug('notifying %s', observer)
             observer(arg)
+
+
+class Value(Observable):
+    def __init__(self, initial_value=None, **kwargs):
+        super(Value, self).__init__(**kwargs)
+        self.value = initial_value
+
+    def set(self, value):
+        self.value = value
+        self.notify_observers(value)

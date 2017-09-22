@@ -12,7 +12,7 @@ class Encoder(multiprocessing.Process):
 
         self.q = multiprocessing.Queue()
 
-    def submit(self, path):
+    def update(self, path):
         self.q.put(('encode', path))
 
     def stop(self):
@@ -21,7 +21,10 @@ class Encoder(multiprocessing.Process):
     def run(self):
         LOG.info('start encoding process')
         while True:
-            command, arg = self.q.get()
+            try:
+                command, arg = self.q.get()
+            except KeyboardInterrupt:
+                break
             LOG.debug('received message: %s', command)
 
             if command == 'stop':
@@ -41,7 +44,6 @@ class Encoder(multiprocessing.Process):
             ])
             path.unlink()
         except subprocess.CalledProcessError as err:
+            if outpath.is_file():
+                outpath.unlink()
             LOG.error('failed to encode file %s: %s', path, err)
-
-if __name__ == '__main__':
-    logging.basicConfig(level='DEBUG')

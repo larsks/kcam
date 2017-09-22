@@ -21,7 +21,7 @@ class MetricListener(observer.Observer):
         if not isinstance(arg, dict):
             arg = {'value': arg}
 
-        LOG.info('metric %s = %s', self.name, arg)
+        LOG.info('sending metric %s = %s', self.name, arg)
         self.client.write_points([
             dict(measurement=self.name,
                  tags=self.tags,
@@ -30,12 +30,22 @@ class MetricListener(observer.Observer):
 
 
 class MetricConnection(influxdb.InfluxDBClient):
+    default_database = 'kcam'
 
     def __init__(self,
-                 database='kcam',
+                 host=None,
+                 port=None,
+                 database=None,
                  **kwargs):
 
+        if host:
+            kwargs['host'] = host
+        if port:
+            kwargs['port'] = port
+
         super(MetricConnection, self).__init__(**kwargs)
+
+        database = database if database else self.default_database
         self.create_database(database)
         self.switch_database(database)
 
