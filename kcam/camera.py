@@ -22,7 +22,7 @@ class Camera(threading.Thread):
                  res_x=800,
                  res_y=600,
                  lead_time=10,
-                 datadir='{timestamp:%Y/%m/%d}',
+                 datadir='{timestamp:%Y/%m/%d/%H-%M-%S}',
                  imagename='img-{timestamp:%H-%M-%S}-{{counter}}.jpg',
                  videoname='vid-{timestamp:%H-%M-%S}.h264',
                  image_interval=2,
