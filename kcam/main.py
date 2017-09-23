@@ -100,7 +100,8 @@ class KCam(object):
             res_x=self.config['camera'].getint('camera_res_x'),
             res_y=self.config['camera'].getint('camera_res_y'),
             lead_time=self.config['camera'].getint('camera_lead_time'),
-            datadir=self.config['camera'].get('camera_datadir'),
+            datadir=self.config.get('DEFAULT', 'datadir'),
+            eventdir=self.config['camera'].get('camera_eventdir'),
             imagename=self.config['camera'].get('camera_imagename'),
             videoname=self.config['camera'].get('camera_videoname'),
             interval=self.config['camera'].getint('camera_interval'),
@@ -154,6 +155,7 @@ def parse_args():
                    default='kcam.conf')
     p.add_argument('--arm',
                    action='store_true')
+    p.add_argument('--datadir', '-D')
 
     g = p.add_argument_group('Logging options')
     g.add_argument('--verbose', '-v',
@@ -179,6 +181,9 @@ def main():
     logging.basicConfig(level=args.loglevel)
     config = configparser.ConfigParser(defaults=DEFAULTS)
     config.read(args.config)
+
+    if args.datadir:
+        config['DEFAULT']['datadir'] = args.datadir
 
     if args.set_logger:
         for name, level in args.set_logger:

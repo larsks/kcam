@@ -1,4 +1,5 @@
 DEFAULTS = dict(
+    datadir='.',
     det_led_pin='24',
     act_led_pin='25',
     pwr_led_pin='27',

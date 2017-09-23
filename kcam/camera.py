@@ -1,10 +1,10 @@
 import datetime
-import errno
 import logging
-import os
 import picamera
 import queue
 import threading
+
+from pathlib import Path
 
 from kcam import observer
 
@@ -19,20 +19,22 @@ def fmt_path(path, timestamp=None):
 
 
 class Camera(observer.Observable, threading.Thread):
-    default_res_x=800
-    default_res_y=600
-    default_lead_time=10
-    default_datadir='{timestamp:%Y/%m/%d/%H-%M-%S}'
-    default_imagename='img-{timestamp:%H-%M-%S}-{{counter}}.jpg'
-    default_videoname='vid-{timestamp:%H-%M-%S}.h264'
-    default_interval=2
-    default_flip=False
+    default_res_x = 800
+    default_res_y = 600
+    default_lead_time = 10
+    default_datadir = '.'
+    default_eventdir = '{timestamp:%Y/%m/%d/%H:%M:%S}'
+    default_imagename = 'img:{timestamp:%H:%M:%S}-{{counter}}.jpg'
+    default_videoname = 'vid:{timestamp:%H:%M:%S}.h264'
+    default_interval = 2
+    default_flip = False
 
     def __init__(self,
                  res_x=None,
                  res_y=None,
                  lead_time=None,
                  datadir=None,
+                 eventdir=None,
                  imagename=None,
                  videoname=None,
                  interval=None,
@@ -46,7 +48,8 @@ class Camera(observer.Observable, threading.Thread):
         flip = flip if flip is not None else self.default_flip
         lead_time = lead_time if lead_time is not None else self.default_lead_time
 
-        self.datadir = datadir if datadir else self.default_datadir
+        self.datadir = Path(datadir if datadir else self.default_datadir)
+        self.eventdir = Path(eventdir if eventdir else self.default_eventdir)
         self.imagename = imagename if imagename else self.default_imagename
         self.videoname = videoname if videoname else self.default_videoname
         self.interval = interval if interval else self.default_interval
@@ -90,15 +93,10 @@ class Camera(observer.Observable, threading.Thread):
         elif not active and self.recording:
             self.control.put('idle')
 
-    def create_datadir(self, timestamp=None):
-        path = fmt_path(self.datadir, timestamp)
-        LOG.info('creating datadir at %s', path)
-
-        try:
-            os.makedirs(path)
-        except OSError as err:
-            if err.errno != errno.EEXIST:
-                raise
+    def create_eventdir(self, timestamp=None):
+        path = Path(fmt_path(str(self.datadir / self.eventdir), timestamp))
+        LOG.info('creating eventdir at %s', path)
+        path.mkdir(parents=True, exist_ok=True)
 
         return path
 
@@ -108,18 +106,18 @@ class Camera(observer.Observable, threading.Thread):
         self.recording = True
         started_at = datetime.datetime.now()
 
-        path = self.create_datadir(started_at)
+        path = self.create_eventdir(started_at)
         videoname = fmt_path(self.videoname, started_at)
-        videopath = os.path.join(path, videoname)
+        videopath = path / videoname
         imagename = fmt_path(self.imagename, started_at)
-        imagepath = os.path.join(path, imagename)
+        imagepath = path / imagename
 
-        with open(videopath, 'wb') as fd:
+        with videopath.open('wb') as fd:
             self.stream.copy_to(fd)
             self.camera.split_recording(fd)
 
             for img in self.camera.capture_continuous(
-                    imagepath, use_video_port=True):
+                    str(imagepath), use_video_port=True):
 
                 try:
                     msg = self.control.get(timeout=self.interval)

@@ -14,7 +14,7 @@
 #camera_res_x = 800
 #camera_res_y = 600
 #camera_interval = 2
-#camera_datadir={timestamp:%Y/%m/%d/%H-%M-%S}
+#camera_eventdir={timestamp:%Y/%m/%d/%H-%M-%S}
 #camera_imagename=img-{timestamp:%H-%M-%S}-{{counter}}.jpg
 #camera_videoname=vid-{timestamp:%H-%M-%S}.h264
 #
