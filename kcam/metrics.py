@@ -21,7 +21,7 @@ class MetricListener(observer.Observer):
         if not isinstance(arg, dict):
             arg = {'value': arg}
 
-        LOG.info('sending metric %s = %s', self.name, arg)
+        LOG.debug('sending metric %s = %s', self.name, arg)
         self.client.write_points([
             dict(measurement=self.name,
                  tags=self.tags,
