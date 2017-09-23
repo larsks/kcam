@@ -10,6 +10,7 @@ from kcam.sensors.activity import ActivitySensor
 from kcam.sensors.temperature import TemperatureSensor
 from kcam.devices.led import LED
 from kcam.devices.blink import Blink
+from kcam.devices.keypad import Keypad
 from kcam.defaults import DEFAULTS
 from kcam.metrics import MetricConnection
 from kcam.camera import Camera
@@ -34,12 +35,14 @@ class KCam(object):
     def __init__(self, config):
         self.config = config
         self.threads = []
+        self.armed = False
 
         self.init_config()
         self.create_leds()
         self.create_metrics()
         self.create_sensors()
         self.create_camera()
+        self.create_keypad()
 
     def init_config(self):
         for section in self.required_sections:
@@ -62,6 +65,15 @@ class KCam(object):
             port=self.config['metrics'].get('port'),
             database=self.config['metrics'].get('database'),
         )
+
+    def create_keypad(self):
+        self.keypad = Keypad(
+            device_name=self.config['keypad'].get('keypad_device_name'),
+            passcode=self.config['keypad'].get('passcode'),
+            grab=self.config['keypad'].getboolean('keypad_grab'),
+        )
+        self.threads.append(self.keypad)
+        self.keypad.add_observer(self, self.handle_passcode_attempt)
 
     def create_sensors(self):
         self.motion_sensor = GPIOSensor(
@@ -116,10 +128,21 @@ class KCam(object):
         self.threads.append(self.encoder)
 
     def arm(self):
+        self.armed = True
         self.activity_sensor.add_observer(self.camera)
+        LOG.warning('armed')
 
     def disarm(self):
+        self.armed = False
         self.activity_sensor.delete_observer(self.camera)
+        LOG.warning('disarmed')
+
+    def handle_passcode_attempt(self, correct):
+        if correct:
+            if self.armed:
+                self.disarm()
+            else:
+                self.arm()
 
     def run(self):
         LOG.info('kcam starting up')

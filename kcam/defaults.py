@@ -7,4 +7,6 @@ DEFAULTS = dict(
     door_pin='4',
     motion_pin='23',
     temperature_pin='12',
+    keypad_device='/dev/input/event0',
+    keypad_grab='true',
 )
