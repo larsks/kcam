@@ -24,8 +24,8 @@ class Camera(observer.Observable, threading.Thread):
     default_lead_time = 10
     default_datadir = '.'
     default_eventdir = '{timestamp:%Y/%m/%d/%H:%M:%S}'
-    default_imagename = 'img:{timestamp:%H:%M:%S}-{{counter}}.jpg'
-    default_videoname = 'vid:{timestamp:%H:%M:%S}.h264'
+    default_imagename = 'img-{timestamp:%H:%M:%S}-{{counter}}.jpg'
+    default_videoname = 'vid-{timestamp:%H:%M:%S}.h264'
     default_interval = 2
     default_flip = False
 
