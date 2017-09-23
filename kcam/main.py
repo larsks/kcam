@@ -93,6 +93,8 @@ class KCam(object):
         )
         self.activity_sensor.add_observer(self.act_led, self.act_led.set)
         self.activity_sensor.add_observer(self.metrics.create_observer('activity'))
+        self.activity_sensor.stopwatch.add_observer(
+            self.metrics.create_observer('activity_duration'))
         self.motion_sensor.add_observer(self.activity_sensor)
 
     def create_camera(self):

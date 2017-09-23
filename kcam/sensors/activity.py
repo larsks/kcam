@@ -1,6 +1,7 @@
 import logging
 
 from kcam.timer import DynamicTimer
+from kcam.stopwatch import Stopwatch
 from kcam import observer
 
 LOG = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ class ActivitySensor(observer.Observable, observer.Observer):
         self.limit = limit if limit else self.default_limit
         self.extend = extend if extend else self.default_extend
         self.cooldown = cooldown if cooldown else self.default_cooldown
+        self.stopwatch = Stopwatch()
 
         self.active = STATE_IDLE
 
@@ -44,8 +46,9 @@ class ActivitySensor(observer.Observable, observer.Observer):
                 self.start_active()
 
     def start_active(self):
-        LOG.debug('start activity')
+        LOG.info('start activity')
         self.active = STATE_ACTIVE
+        self.stopwatch.start()
         self.notify_observers(1)
 
         self.timer = DynamicTimer(
@@ -55,12 +58,13 @@ class ActivitySensor(observer.Observable, observer.Observer):
         self.timer.start()
 
     def continue_active(self):
-        LOG.debug('continue activity')
+        LOG.info('continue activity')
         self.timer.extend(self.extend)
 
     def end_active(self):
-        LOG.debug('end activity')
+        LOG.info('end activity')
         self.active = STATE_COOLDOWN
+        self.stopwatch.stop()
         self.notify_observers(0)
 
         LOG.debug('cooldown for %d seconds', self.cooldown)
