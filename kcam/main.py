@@ -25,7 +25,7 @@ class KCam(object):
     required_sections = [
         'metrics',
         'camera',
-        'leds',
+        'pins',
         'sensor:motion',
         'sensor:temperature',
         'sensor:door',
@@ -39,6 +39,7 @@ class KCam(object):
 
         self.init_config()
         self.create_leds()
+        self.create_buttons()
         self.create_metrics()
         self.create_sensors()
         self.create_camera()
@@ -49,15 +50,23 @@ class KCam(object):
             if section not in self.config:
                 self.config.add_section(section)
 
+    def create_buttons(self):
+        self.arm_btn = GPIOSensor(
+            self.config.getint('pins', 'arm_btn_pin'),
+            pull_down=True,
+            bouncetime=200)
+        self.threads.append(self.arm_btn)
+        self.arm_btn.add_observer(self, self.handle_arm_button)
+
     def create_leds(self):
-        self.pwr_led = LED(self.config.getint('leds', 'pwr_led_pin'))
+        self.pwr_led = LED(self.config.getint('pins', 'pwr_led_pin'))
         self.pwr_led_blink = Blink()
         self.pwr_led_blink.add_observer(self.pwr_led, self.pwr_led.set)
         self.threads.append(self.pwr_led_blink)
 
-        self.act_led = LED(self.config.getint('leds', 'act_led_pin'))
-        self.det_led = LED(self.config.getint('leds', 'det_led_pin'))
-        self.arm_led = LED(self.config.getint('leds', 'arm_led_pin'))
+        self.act_led = LED(self.config.getint('pins', 'act_led_pin'))
+        self.det_led = LED(self.config.getint('pins', 'det_led_pin'))
+        self.arm_led = LED(self.config.getint('pins', 'arm_led_pin'))
 
     def create_metrics(self):
         self.metrics = MetricConnection(
@@ -138,11 +147,19 @@ class KCam(object):
         LOG.warning('disarmed')
 
     def handle_passcode_attempt(self, correct):
+        LOG.debug('handling %s passcode attempt',
+                  'correct' if correct else 'incorrect')
         if correct:
             if self.armed:
                 self.disarm()
             else:
                 self.arm()
+
+    def handle_arm_button(self, pressed):
+        LOG.debug('arm button pressed when %s',
+                  'armed' if self.armed else 'not armed')
+        if pressed and not self.armed:
+            self.arm()
 
     def run(self):
         LOG.info('kcam starting up')
