@@ -1,0 +1,20 @@
+---
+- name: install lighttpd-kcam configuration
+  template:
+    src: lighttpd-kcam.conf.j2
+    dest: /etc/lighttpd/lighttpd-kcam.conf
+  notify: restart lighttpd@kcam
+
+- name: create lighttpd directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /var/log/kcam
+    - /var/cache/kcam
+
+- name: activate lighttpd-kcam service
+  service:
+    name: lighttpd@kcam
+    state: running
+    enabled: true

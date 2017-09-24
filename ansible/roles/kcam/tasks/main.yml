@@ -1,0 +1,31 @@
+---
+- name: check out kcam source
+  git:
+    repo: https://github.com/larsks/kcam.git
+    dest: /home/kcam/kcam
+    force: true
+
+- name: install kcam requirements
+  pip:
+    state: present
+    chdir: /home/kcam/kcam
+    virtualenv: /home/kcam/.venv
+    virtualenv_site_packages: true
+    virtualenv_python: /usr/bin/python3
+    requirements: requirements.txt
+
+- name: install kcam
+  pip:
+    state: present
+    chdir: /home/kcam/kcam
+    virtualenv: /home/kcam/.venv
+    virtualenv_site_packages: true
+    virtualenv_python: /usr/bin/python3
+    name: .
+    editable: true
+    extra_args: "-e"
+
+- name: install kcam configuration
+  template:
+    src: kcam.conf.j2
+    dest: /home/kcam/kcam.conf

@@ -1,0 +1,14 @@
+---
+- name: install kcam service
+  template:
+    src: kcam.service
+    dest: /etc/systemd/system/kcam.service
+  notify: reload systemd
+
+- meta: flush_handlers
+
+- name: activate kcam service
+  service:
+    name: kcam
+    state: running
+    enabled: true

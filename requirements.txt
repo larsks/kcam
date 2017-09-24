@@ -1,4 +1,6 @@
 RPi.GPIO
 picamera
-#git+https://github.com/adafruit/Adafruit_Python_DHT
+evdev
+jinja2
+git+https://github.com/adafruit/Adafruit_Python_DHT
 

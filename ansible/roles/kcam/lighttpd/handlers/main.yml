@@ -1,0 +1,5 @@
+---
+- name: restart lighttpd@kcam
+  service:
+    name: lighttpd@kcam
+    state: restarted

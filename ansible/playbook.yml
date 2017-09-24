@@ -1,0 +1,42 @@
+---
+- name: install prerequisites
+  hosts: localhost
+  become: true
+  become_user: root
+  tags:
+    - prereqs
+  roles:
+    - common
+    - iptables
+    - chrony
+    - influxdb
+    - lighttpd
+    - pydeps
+
+- name: kcam privileged actions (pre)
+  hosts: localhost
+  become: true
+  become_user: root
+  tags:
+    - kcam
+  roles:
+    - kcam/user
+
+- name: install kcam
+  hosts: localhost
+  become: true
+  become_user: kcam
+  tags:
+    - kcam
+  roles:
+    - kcam
+
+- name: kcam privileged actions (post)
+  hosts: localhost
+  become: true
+  become_user: root
+  tags:
+    - kcam
+  roles:
+    - kcam/service
+    - kcam/lighttpd

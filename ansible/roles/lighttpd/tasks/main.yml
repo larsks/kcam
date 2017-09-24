@@ -1,0 +1,17 @@
+---
+- name: install lighttpd
+  package:
+    name: lighttpd
+    state: installed
+
+- name: disable default lighttpd service
+  service:
+    name: lighttpd
+    state: stopped
+    enabled: false
+
+- name: install lighttpd template unit
+  template:
+    src: lighttpd@.service
+    dest: /etc/systemd/system/lighttpd@.service
+  notify: reload systemd

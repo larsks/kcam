@@ -1,0 +1,4 @@
+---
+kcam_passcode: 1234
+kcam_datadir: /home/kcam/data
+kcam_camera_flip: true

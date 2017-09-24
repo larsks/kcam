@@ -1,0 +1,17 @@
+---
+- name: install chrony
+  package:
+    name: chrony
+    state: installed
+
+- name: install chrony configuration
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+  notify: restart chrony
+
+- name: activate chrony service
+  service:
+    name: chrony
+    state: running
+    enabled: true

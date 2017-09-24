@@ -1,0 +1,7 @@
+---
+pydep_packages:
+  - python3-influxdb
+  - python3-picamera
+  - python3-rpi.gpio
+  - python3-virtualenv
+  - virtualenv

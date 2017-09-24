@@ -1,0 +1,7 @@
+- name: create kcam user
+  user:
+    name: kcam
+    state: present
+    comment: Camera User
+    shell: /bin/bash
+    groups: input,gpio,i2c,spi,audio,video

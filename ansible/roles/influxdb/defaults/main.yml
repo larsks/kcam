@@ -1,0 +1,11 @@
+---
+influxdb_packages:
+  - influxdb
+  - influxdb-client
+  - python3-influxdb
+
+influxdb_admin_enabled: false
+influxdb_api_enabled: true
+influxdb_collectd_enabled: true
+influxdb_collectd_bind_address: "127.0.0.1:25826"
+influxdb_collectd_db: collectd

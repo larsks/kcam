@@ -1,0 +1,3 @@
+---
+ntpservers:
+  - 2.debian.pool.ntp.org iburst

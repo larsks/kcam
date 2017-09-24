@@ -1,0 +1,12 @@
+[Unit]
+Description=Kcam service
+After=network.target
+
+[Service]
+Type=simple
+User=kcam
+ExecStart=/home/kcam/.venv/bin/kcam -f home/kcam/kcam.conf
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
