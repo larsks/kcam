@@ -14,6 +14,7 @@ setup(
     entry_points={
         'console_scripts': [
             'kcam = kcam.main:main',
+            'kcam-update-html = kcam.main:update_html',
         ],
     }
 )

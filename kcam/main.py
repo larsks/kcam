@@ -1,8 +1,10 @@
 import argparse
 import configparser
 import logging
+import os
 import signal
 
+from pathlib import Path
 from RPi import GPIO
 
 from kcam.sensors.gpio import GPIOSensor
@@ -17,6 +19,7 @@ from kcam.camera import Camera
 from kcam.taskmanager import TaskManager
 from kcam.tasks import (EncodeVideo, GenerateThumbnails,
                         UpdateEventHTML, UpdateEventListHTML)
+from kcam.util import date_from_path
 
 LOG = logging.getLogger(__name__)
 GPIO.setwarnings(False)
@@ -231,7 +234,7 @@ def parse_args():
     return p.parse_args()
 
 
-def main():
+def process_cli():
     args = parse_args()
     logging.basicConfig(level=args.loglevel)
     config = configparser.ConfigParser(defaults=DEFAULTS)
@@ -245,6 +248,37 @@ def main():
             logger = logging.getLogger(name)
             logger.setLevel(level.upper())
 
+    return config
+
+
+def update_html():
+    config = process_cli()
+    update_event = UpdateEventHTML()
+    update_eventlist = UpdateEventListHTML()
+    datadir = config.get('DEFAULT', 'datadir')
+
+    events = []
+    for root, dirs, files in os.walk(datadir):
+        root = Path(root)
+        relpath = root.relative_to(datadir)
+        if len(str(relpath).split('/')) != 4:
+            continue
+
+        event = date_from_path(relpath)
+
+        update_event({
+            'datadir': datadir,
+            'path': root,
+            'event': event,
+        })
+
+    update_eventlist({
+        'datadir': datadir,
+    })
+
+
+def main():
+    config = process_cli()
     app = KCam(config)
     if args.arm:
         app.arm()
