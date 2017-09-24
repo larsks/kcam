@@ -1,23 +1,21 @@
+{% extends "page.html" %}
 {% set title = event.strftime('%B %d, %Y %I:%M:%S%p') %}
-<html>
-  <head>
-    <title>{{ title }}</title>
-  </head>
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
 
-  <body>
-    <h1>{{ title }}</h1>
+<a href="/">Event list</a>
 
-    <h2>Videos</h2>
+<h2>Videos</h2>
 {% for video in videos %}
 <video controls>
-  <source src="{{ video.path.name|urlencode }}"/>
+<source src="{{ video.path.name|urlencode }}"/>
 </video>
 {% endfor %}
 
-    <h2>Photos</h2>
+<h2>Photos</h2>
 {% for image in images %}
 <a href="{{ image.path.name|urlencode }}"><img src="{{
-image.thumb.name|urlencode }}" alt="{{ image.path.name }}"/></a>
+  image.thumb.name|urlencode }}" alt="{{ image.path.name }}"/></a>
 {% endfor %}
-  </body>
-</html>
+{% endblock %}

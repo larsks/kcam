@@ -4,3 +4,8 @@
 - `arm` - this is if we are currently tracking motion
 - `det` - this is on whenver the PIR sensor detects motion
 - `act` - this is on whenver we are actively collection photos
+
+## TODO
+
+- live streaming endpoint
+- spawn a process to manage postprocessing pipeline

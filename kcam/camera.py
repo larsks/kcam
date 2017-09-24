@@ -104,12 +104,12 @@ class Camera(observer.Observable, threading.Thread):
         LOG.info('starting capture')
 
         self.recording = True
-        started_at = datetime.datetime.now()
+        event = datetime.datetime.now()
 
-        path = self.create_eventdir(started_at)
-        videoname = fmt_path(self.videoname, started_at)
+        path = self.create_eventdir(event)
+        videoname = fmt_path(self.videoname, event)
         videopath = path / videoname
-        imagename = fmt_path(self.imagename, started_at)
+        imagename = fmt_path(self.imagename, event)
         imagepath = path / imagename
 
         with videopath.open('wb') as fd:
@@ -133,4 +133,6 @@ class Camera(observer.Observable, threading.Thread):
 
         self.recording = False
         LOG.info('finished capture')
-        self.notify_observers(videopath)
+        self.notify_observers(dict(datadir=self.datadir,
+                                   event=event,
+                                   path=path))

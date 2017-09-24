@@ -13,7 +13,12 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
+class TaskFailure(Exception):
+    pass
+
+
 class TaskManager(observer.Synchronization, threading.Thread):
+    '''Execute a list of (possibly parallel) tasks'''
 
     def __init__(self, workers=None, **kwargs):
         super(TaskManager, self).__init__(**kwargs)
@@ -58,6 +63,7 @@ class TaskManager(observer.Synchronization, threading.Thread):
                 except StopIteration:
                     break
 
+                LOG.debug('running taskspec %s', taskspec)
                 if not self.run_parallel_tasks(taskspec, args):
                     LOG.error('aborting pipeline')
                     break
@@ -68,27 +74,31 @@ class TaskManager(observer.Synchronization, threading.Thread):
         LOG.info('stop task manager')
 
     def run_parallel_tasks(self, tasks, args):
+        '''Run a list of tasks in parallel using apply_async'''
+
         res = [self.pool.apply_async(task, args)
                for task in tasks]
 
         has_failures = False
-        resiter = iter(res)
+        resiter = enumerate(res)
         while not self.flag_stop:
             try:
-                taskresult = next(resiter)
+                i, taskresult = next(resiter)
             except StopIteration:
                 break
 
             try:
                 res = taskresult.get()
                 if not res:
-                    LOG.error('task execution failed (%s)', res)
-                    has_failures = True
-            except Exception:
-                LOG.error('task execution failed', exc_info=True)
+                    raise TaskFailure(res)
+            except Exception as err:
+                LOG.error('task %s execution failed: %s',
+                          tasks[i], err, exc_info=True)
                 has_failures = True
 
         return not has_failures
 
     def update(self, *args):
+        '''Queue up new arguments to pass to the task pipeline'''
+
         self.q.put(args)

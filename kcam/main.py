@@ -14,7 +14,9 @@ from kcam.devices.keypad import Keypad
 from kcam.defaults import DEFAULTS
 from kcam.metrics import MetricConnection
 from kcam.camera import Camera
-from kcam.encoder import Encoder
+from kcam.taskmanager import TaskManager
+from kcam.tasks import (EncodeVideo, GenerateThumbnails,
+                        UpdateEventHTML, UpdateEventListHTML)
 
 LOG = logging.getLogger(__name__)
 GPIO.setwarnings(False)
@@ -38,6 +40,7 @@ class KCam(object):
         self.armed = False
 
         self.init_config()
+        self.create_taskmanager()
         self.create_leds()
         self.create_buttons()
         self.create_metrics()
@@ -49,6 +52,12 @@ class KCam(object):
         for section in self.required_sections:
             if section not in self.config:
                 self.config.add_section(section)
+
+    def create_taskmanager(self):
+        self.postprocess = TaskManager()
+        self.threads.append(self.postprocess)
+        self.postprocess.add_task((EncodeVideo(), GenerateThumbnails()))
+        self.postprocess.add_task((UpdateEventHTML(), UpdateEventListHTML()))
 
     def create_buttons(self):
         self.arm_btn = GPIOSensor(
@@ -131,10 +140,7 @@ class KCam(object):
             flip=self.config['camera'].getboolean('camera_flip'),
         )
         self.threads.append(self.camera)
-
-        self.encoder = Encoder()
-        self.camera.add_observer(self.encoder)
-        self.threads.append(self.encoder)
+        self.camera.add_observer(self.postprocess)
 
     def arm(self):
         self.armed = True
@@ -176,6 +182,13 @@ class KCam(object):
         for thread in self.threads:
             try:
                 thread.stop()
+            except AttributeError:
+                pass
+
+        LOG.info('waiting for threads to complete')
+        for thread in self.threads:
+            try:
+                thread.join()
             except AttributeError:
                 pass
 
