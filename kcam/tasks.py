@@ -15,7 +15,7 @@ def thumbnail_path(path):
 
 class EncodeVideo(object):
     def __call__(self, arg):
-        LOG.debug('start encode video task @ %s', arg['path'])
+        LOG.info('start encode video task @ %s', arg['path'])
         path = Path(arg['path'])
 
         failures = 0
@@ -33,7 +33,7 @@ class EncodeVideo(object):
                     outpath.unlink()
                 failures += 1
 
-        LOG.debug('finish encode video task w/ %d failures', failures)
+        LOG.info('finish encode video task w/ %d failures', failures)
         return failures == 0
 
 
@@ -45,7 +45,7 @@ class GenerateThumbnails(object):
         self.res_y = res_y
 
     def __call__(self, arg):
-        LOG.debug('start generate thumbnail task @ %s', arg['path'])
+        LOG.info('start generate thumbnail task @ %s', arg['path'])
         path = Path(arg['path'])
 
         failures = 0
@@ -62,7 +62,7 @@ class GenerateThumbnails(object):
                           image, err)
                 failures += 1
 
-        LOG.debug('finish generate thumbnail task w/ %d failures', failures)
+        LOG.info('finish generate thumbnail task w/ %d failures', failures)
         return failures == 0
 
 
@@ -101,7 +101,7 @@ class UpdateEventHTML(TemplateProcessor):
         return media_info
 
     def __call__(self, arg):
-        LOG.debug('start update event html task @ %s', arg['path'])
+        LOG.info('start update event html task @ %s', arg['path'])
         path = Path(arg['path'])
         datadir = Path(arg['datadir'])
 
@@ -123,6 +123,7 @@ class UpdateEventHTML(TemplateProcessor):
                 images=sorted(image_info, key=lambda x: x['stat'].st_mtime),
             ))
 
+        LOG.info('finished update event html task')
         return True
 
 
@@ -130,7 +131,7 @@ class UpdateEventListHTML(TemplateProcessor):
     '''Generate the main event listing'''
 
     def __call__(self, arg):
-        LOG.debug('start update event list html task')
+        LOG.info('start update event list html task')
         datadir = Path(arg['datadir'])
         events = []
 
@@ -155,4 +156,5 @@ class UpdateEventListHTML(TemplateProcessor):
                 events=sorted(events),
             ))
 
+        LOG.info('finished update event list html task')
         return True
