@@ -7,17 +7,19 @@ import signal
 from pathlib import Path
 from RPi import GPIO
 
-from kcam.sensors.gpio import GPIOSensor
-from kcam.sensors.activity import ActivitySensor
-from kcam.devices.led import LED
+from kcam.camera import Camera
+from kcam.defaults import DEFAULTS
 from kcam.devices.blink import Blink
 from kcam.devices.keypad import Keypad
-from kcam.defaults import DEFAULTS
+from kcam.devices.led import LED
 from kcam.metrics import MetricConnection
-from kcam.camera import Camera
+from kcam.sensors.activity import ActivitySensor
+from kcam.sensors.gpio import GPIOSensor
 from kcam.taskmanager import TaskManager
-from kcam.tasks import (EncodeVideo, GenerateThumbnails,
-                        UpdateEventHTML, UpdateEventListHTML)
+from kcam.tasks import (EncodeVideo,
+                        GenerateThumbnails,
+                        UpdateEventHTML,
+                        UpdateEventListHTML)
 from kcam.util import date_from_path
 
 LOG = logging.getLogger(__name__)
@@ -95,6 +97,9 @@ class KCam(object):
         )
         self.threads.append(self.keypad)
         self.keypad.add_observer(self, self.handle_passcode_attempt)
+        arm_key = self.config['keypad'].get('keypad_arm_key')
+        if arm_key:
+            self.keypad.keys[arm_key].add_observer(self, self.handle_arm_key)
 
     def create_sensors(self):
         self.motion_sensor = GPIOSensor(
@@ -161,6 +166,10 @@ class KCam(object):
                   'armed' if self.armed else 'not armed')
         if pressed and not self.armed:
             self.arm()
+
+    def handle_arm_key(self, key):
+        LOG.debug('arm key %s pressed', key)
+        self.arm()
 
     def run(self):
         LOG.info('kcam starting up')

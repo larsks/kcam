@@ -3,6 +3,8 @@ import logging
 import threading
 import time
 
+from collections import defaultdict
+
 from kcam import observer
 
 LOG = logging.getLogger(__name__)
@@ -52,6 +54,7 @@ class Keypad(observer.Observable, threading.Thread):
         self.passcode = passcode
         self.acc = []
         self.timeout = timeout if timeout else self.default_timeout
+        self.listeners = defaultdict(list)
 
         if device:
             self.device = evdev.InputDevice(device)
@@ -62,6 +65,15 @@ class Keypad(observer.Observable, threading.Thread):
 
         if grab:
             self.device.grab()
+
+    def add_key_listener(self, keycode, func):
+        keycode = keycode.upper()
+
+        if (keycode in ['KEY_ENTER', 'KEY_KPENTER'] or
+                keycode in keymap):
+            raise ValueError('cannot listen to reserved key')
+
+        self.listeners[getattr(evdev.ecodes, keycode)] = func
 
     def lookup_device(self, name):
         LOG.debug('looking for input device "%s"', name)
@@ -91,7 +103,10 @@ class Keypad(observer.Observable, threading.Thread):
 
                 LOG.debug('keycode event for %s', key.keycode)
 
-                if key.keycode in keymap:
+                if key.keycode in self.listeners:
+                    for func in self.listeners[key.keycode]:
+                        func(key)
+                elif key.keycode in keymap:
                     self.acc.append(keymap[key.keycode])
                 elif key.keycode in ['KEY_ENTER', 'KEY_KPENTER']:
                     self.check_passcode()
