@@ -47,7 +47,6 @@ class Keypad(observer.Observable, threading.Thread):
         super(Keypad, self).__init__(daemon=True, **kwargs)
 
         if device is None and device_name is None:
-            LOG.info('using default device %s', self.default_device)
             device = self.default_device
 
         self.passcode = passcode
@@ -59,10 +58,13 @@ class Keypad(observer.Observable, threading.Thread):
         else:
             self.device = self.lookup_device(device_name)
 
+        LOG.info('using input device %s', self.device)
+
         if grab:
             self.device.grab()
 
     def lookup_device(self, name):
+        LOG.debug('looking for input device "%s"', name)
         devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
         for dev in devices:
             if dev.name == name:
