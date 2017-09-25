@@ -250,11 +250,11 @@ def process_cli():
             logger = logging.getLogger(name)
             logger.setLevel(level.upper())
 
-    return config
+    return args, config
 
 
 def update_html():
-    config = process_cli()
+    args, config = process_cli()
     update_event = UpdateEventHTML()
     update_eventlist = UpdateEventListHTML()
     datadir = config.get('DEFAULT', 'datadir')
@@ -280,7 +280,7 @@ def update_html():
 
 
 def main():
-    config = process_cli()
+    args, config = process_cli()
     app = KCam(config)
     if args.arm:
         app.arm()
