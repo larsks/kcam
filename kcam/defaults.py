@@ -5,6 +5,7 @@ DEFAULTS = dict(
     pwr_led_pin='27',
     arm_led_pin='17',
     arm_btn_pin='22',
+    buzzer_pin='16',
     door_pin='4',
     motion_pin='23',
     temperature_pin='12',

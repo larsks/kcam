@@ -13,6 +13,7 @@ setup(
             'kcam-update-html = kcam.main:update_html',
             'kcam-tempd = kcam.cmd.tempd:main',
             'kcam-test-keypad = kcam.cmd.test_keypad:main',
+            'kcam-test-buzzer = kcam.cmd.test_buzzer:main',
         ],
     }
 )
