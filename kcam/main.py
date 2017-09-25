@@ -169,7 +169,8 @@ class KCam(object):
 
     def handle_arm_key(self, key):
         LOG.debug('arm key %s pressed', key)
-        self.arm()
+        if not self.armed:
+            self.arm()
 
     def run(self):
         LOG.info('kcam starting up')
