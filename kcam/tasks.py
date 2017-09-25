@@ -25,6 +25,7 @@ class EncodeVideo(object):
                 subprocess.check_call([
                     'ffmpeg', '-f', 'h264', '-i', str(video),
                     '-c:v', 'copy', str(outpath),
+                    '-nostats', '-loglevel', 'error',
                 ])
                 video.unlink()
             except subprocess.CalledProcessError as err:
