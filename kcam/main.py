@@ -193,7 +193,8 @@ class KCam(object):
         LOG.info('waiting for threads to complete')
         for thread in self.threads:
             try:
-                thread.join()
+                if not thread.daemon:
+                    thread.join()
             except AttributeError:
                 pass
 
