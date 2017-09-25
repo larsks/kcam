@@ -11,6 +11,7 @@ setup(
         'console_scripts': [
             'kcam = kcam.main:main',
             'kcam-update-html = kcam.main:update_html',
+            'kcam-tempd = kcam.cmd.tempd:main',
         ],
     }
 )

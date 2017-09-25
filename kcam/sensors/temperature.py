@@ -32,18 +32,22 @@ class TemperatureSensor(threading.Thread):
         self.humidity = observer.Value()
         self.mutex = threading.RLock()
 
+    def __str__(self):
+        return '<TemperatureSensor pin:%d interval:%d>' % (
+            self.pin, self.interval)
+
     def stop(self):
         self.evt_stop.set()
 
     def run(self):
-        LOG.info('starting temperature sensor on pin %d', self.pin)
+        LOG.info('starting temperature sensor %s', self)
 
         while True:
             humidity, temperature = Adafruit_DHT.read_retry(
                 self.devicetype, self.pin)
             if humidity is not None and temperature is not None:
-                LOG.debug('got humidity = %f, temp = %f',
-                          humidity, temperature)
+                LOG.info('got humidity = %f, temp = %f',
+                         humidity, temperature)
                 with self.mutex:
                     self.temperature.set(temperature)
                     self.humidity.set(humidity)
