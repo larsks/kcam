@@ -8,6 +8,8 @@
 - meta: flush_handlers
 
 - name: activate kcam service
+  tags:
+    - kcam_service
   service:
     name: kcam
     state: running
