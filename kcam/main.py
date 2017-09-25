@@ -144,11 +144,13 @@ class KCam(object):
 
     def arm(self):
         self.armed = True
+        self.arm_led.on()
         self.motion_sensor.add_observer(self.activity_sensor)
         LOG.warning('armed')
 
     def disarm(self):
         self.armed = False
+        self.arm_led.off()
         self.motion_sensor.delete_observer(self.activity_sensor)
         LOG.warning('disarmed')
 
