@@ -9,7 +9,6 @@ from RPi import GPIO
 
 from kcam.sensors.gpio import GPIOSensor
 from kcam.sensors.activity import ActivitySensor
-from kcam.sensors.temperature import TemperatureSensor
 from kcam.devices.led import LED
 from kcam.devices.blink import Blink
 from kcam.devices.keypad import Keypad
@@ -33,7 +32,6 @@ class KCam(object):
         'pins',
         'keypad',
         'sensor:motion',
-        'sensor:temperature',
         'sensor:door',
         'sensor:activity',
     ]
@@ -111,14 +109,6 @@ class KCam(object):
             pull_up=True)
         self.door_sensor.add_observer(self.metrics.create_observer('door'))
         self.threads.append(self.door_sensor)
-
-        self.temp_sensor = TemperatureSensor(
-            self.config.getint('sensor:temperature', 'temperature_pin'),
-            devicetype=self.config['sensor:temperature'].get('temperature_devicetype'),
-            interval=self.config['sensor:temperature'].get('temperature_interval'))
-        self.temp_sensor.temperature.add_observer(self.metrics.create_observer('temperature'))
-        self.temp_sensor.humidity.add_observer(self.metrics.create_observer('humidity'))
-        self.threads.append(self.temp_sensor)
 
         self.activity_sensor = ActivitySensor(
             interval=self.config['sensor:activity'].getint('activity_interval'),
