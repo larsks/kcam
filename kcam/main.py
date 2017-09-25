@@ -130,7 +130,6 @@ class KCam(object):
         self.activity_sensor.add_observer(self.metrics.create_observer('activity'))
         self.activity_sensor.stopwatch.add_observer(
             self.metrics.create_observer('activity_duration'))
-        self.motion_sensor.add_observer(self.activity_sensor)
 
     def create_camera(self):
         self.camera = Camera(
@@ -146,15 +145,16 @@ class KCam(object):
         )
         self.threads.append(self.camera)
         self.camera.add_observer(self.postprocess)
+        self.activity_sensor.add_observer(self.camera)
 
     def arm(self):
         self.armed = True
-        self.activity_sensor.add_observer(self.camera)
+        self.motion_sensor.add_observer(self.activity_sensor)
         LOG.warning('armed')
 
     def disarm(self):
         self.armed = False
-        self.activity_sensor.delete_observer(self.camera)
+        self.motion_sensor.delete_observer(self.activity_sensor)
         LOG.warning('disarmed')
 
     def handle_passcode_attempt(self, correct):
