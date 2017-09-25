@@ -31,6 +31,7 @@ class KCam(object):
         'metrics',
         'camera',
         'pins',
+        'keypad',
         'sensor:motion',
         'sensor:temperature',
         'sensor:door',
