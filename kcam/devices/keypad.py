@@ -34,6 +34,7 @@ keymap = {
 class Keypad(observer.Observable, threading.Thread):
 
     default_timeout = 10
+    default_device = '/dev/input/event0'
 
     def __init__(self,
                  device=None,
@@ -46,7 +47,8 @@ class Keypad(observer.Observable, threading.Thread):
         super(Keypad, self).__init__(daemon=True, **kwargs)
 
         if device is None and device_name is None:
-            raise ValueError('you must provide a device path or name')
+            LOG.info('using default device %s', self.default_device)
+            device = self.default_device
 
         self.passcode = passcode
         self.acc = []

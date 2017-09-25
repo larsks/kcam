@@ -91,6 +91,7 @@ class KCam(object):
     def create_keypad(self):
         self.keypad = Keypad(
             device_name=self.config['keypad'].get('keypad_device_name'),
+            device=self.config['keypad'].get('keypad_device'),
             passcode=self.config['keypad'].get('passcode'),
             grab=self.config['keypad'].getboolean('keypad_grab'),
         )
