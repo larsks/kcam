@@ -147,7 +147,7 @@ reporting-enabled = false
 ###
 
 [admin]
-  enabled = {{ influxdb_admin_enabled }}
+  enabled = {{ influxdb_admin_enabled|str|lower }}
   bind-address = ":8083"
   https-enabled = false
   https-certificate = "/etc/ssl/influxdb.pem"
@@ -160,7 +160,7 @@ reporting-enabled = false
 ###
 
 [http]
-  enabled = {{ influxdb_api_enabled }}
+  enabled = {{ influxdb_api_enabled|str|lower }}
   bind-address = ":8086"
   auth-enabled = false
   log-enabled = true
@@ -233,7 +233,7 @@ reporting-enabled = false
 ###
 
 [[collectd]]
-  enabled = {{ influxdb_collectd_enabled }}
+  enabled = {{ influxdb_collectd_enabled|str|lower }}
   bind-address = "{{ influxdb_collectd_bind_address }}"
   database = "{{ influxdb_collectd_db }}"
   typesdb = "/usr/share/collectd/types.db"
