@@ -5,12 +5,21 @@
     dest: /etc/systemd/system/kcam.service
   notify: reload systemd
 
+- name: install kcam-tempd service
+  template:
+    src: kcam-tempd.service
+    dest: /etc/systemd/system/kcam-tempd.service
+  notify: reload systemd
+
 - meta: flush_handlers
 
-- name: activate kcam service
+- name: activate kcam services
   tags:
     - kcam_service
   service:
-    name: kcam
+    name: "{{ item }}"
     state: running
     enabled: true
+  with_items:
+    - kcam
+    - kcam-tempd

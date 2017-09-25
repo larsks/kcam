@@ -1,0 +1,12 @@
+[Unit]
+Description=Kcam temperature/humidity service
+After=network.target
+
+[Service]
+Type=simple
+User=kcam
+ExecStart=/home/kcam/.venv/bin/kcam-tempd -f home/kcam/kcam.conf -v
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
