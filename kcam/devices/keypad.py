@@ -33,6 +33,11 @@ keymap = {
 }
 
 
+def is_keypad(device):
+    return (evdev.ecodes.KEY_KP1
+            in device.capabilities()[evdev.ecodes.EV_KEY])
+
+
 class Keypad(observer.Observable, threading.Thread):
 
     default_timeout = 10
@@ -70,7 +75,7 @@ class Keypad(observer.Observable, threading.Thread):
         LOG.debug('looking for input device "%s"', name)
         devices = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
         for dev in devices:
-            if dev.name == name:
+            if dev.name == name and is_keypad(dev):
                 return dev
 
         raise KeyError('no device named %s' % name)
