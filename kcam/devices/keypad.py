@@ -46,7 +46,6 @@ class Keypad(observer.Observable, threading.Thread):
     def __init__(self,
                  device=None,
                  device_name=None,
-                 passcode=None,
                  grab=None,
                  timeout=None,
                  **kwargs):
@@ -56,7 +55,6 @@ class Keypad(observer.Observable, threading.Thread):
         if device is None and device_name is None:
             device = self.default_device
 
-        self.passcode = passcode
         self.acc = []
         self.timeout = timeout if timeout else self.default_timeout
         self.keys = defaultdict(observer.Observable)
@@ -104,16 +102,15 @@ class Keypad(observer.Observable, threading.Thread):
                 elif key.keycode in keymap:
                     self.acc.append(keymap[key.keycode])
                 elif key.keycode in ['KEY_ENTER', 'KEY_KPENTER']:
-                    self.check_passcode()
+                    self.process_input()
 
                 last_event = this_event
 
         LOG.debug('stopping keypad thread')
 
-    def check_passcode(self):
-        attempt = ''.join(self.acc)
+    def process_input(self):
+        data = ''.join(self.acc)
         self.acc = []
 
-        LOG.debug('checking passcode, got "%s" expecting "%s"',
-                  attempt, self.passcode)
-        self.notify_observers(attempt == self.passcode)
+        LOG.debug('sending keypad input: %s', data)
+        self.notify_observers(data)

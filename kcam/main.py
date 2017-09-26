@@ -92,7 +92,6 @@ class KCam(object):
         self.keypad = Keypad(
             device_name=self.config['keypad'].get('keypad_device_name'),
             device=self.config['keypad'].get('keypad_device'),
-            passcode=self.config['keypad'].get('passcode'),
             grab=self.config['keypad'].getboolean('keypad_grab'),
         )
         self.threads.append(self.keypad)
@@ -100,6 +99,7 @@ class KCam(object):
         arm_key = self.config['keypad'].get('keypad_arm_key')
         if arm_key:
             self.keypad.keys[arm_key].add_observer(self, self.handle_arm_key)
+        self.passcode = self.config['DEFAULT'].get('passcode')
 
     def create_sensors(self):
         self.motion_sensor = GPIOSensor(
@@ -154,14 +154,20 @@ class KCam(object):
         self.motion_sensor.delete_observer(self.activity_sensor)
         LOG.warning('disarmed')
 
-    def handle_passcode_attempt(self, correct):
-        LOG.debug('handling %s passcode attempt',
-                  'correct' if correct else 'incorrect')
-        if correct:
-            if self.armed:
-                self.disarm()
-            else:
-                self.arm()
+    def handle_passcode_attempt(self, passcode):
+        LOG.debug('handling passcode attempt want "%s" got "%s"',
+                  self.passcode, passcode)
+        if passcode == self.passcode:
+            LOG.info('received correct passcode')
+            self.toggle_armed()
+        else:
+            LOG.error('received incorrect passcode')
+
+    def toggle_armed(self):
+        if self.armed:
+            self.disarm()
+        else:
+            self.arm()
 
     def handle_arm_button(self, pressed):
         LOG.debug('arm button pressed when %s',
