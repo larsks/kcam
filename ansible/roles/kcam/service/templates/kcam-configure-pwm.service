@@ -1,0 +1,10 @@
+[Unit]
+Description=Kcam service
+Before=kcam.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/kcam-configure-pwm
+
+[Install]
+WantedBy=multi-user.target
