@@ -55,14 +55,15 @@ class Buzzer(object):
         with (self.pwm / 'duty_cycle').open('wb') as fd:
             fd.write(duty_cycle_bytes)
 
-        enable = b'1\n' if self.enable else b'0\n'
-        with (self.pwm / 'enable').open('wb') as fd:
-            fd.write(enable)
+        try:
+            enable = b'1\n' if self.enable else b'0\n'
+            with (self.pwm / 'enable').open('wb') as fd:
+                fd.write(enable)
 
-        time.sleep(duration)
-
-        with (self.pwm / 'enable').open('wb') as fd:
-            fd.write(b'0\n')
+            time.sleep(duration)
+        finally:
+            with (self.pwm / 'enable').open('wb') as fd:
+                fd.write(b'0\n')
 
     def play(self, tune):
         LOG.debug('play tune %s', tune)
