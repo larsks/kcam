@@ -160,6 +160,9 @@ class KCam(object):
         self.activity_sensor.add_observer(self.camera)
 
     def arm(self):
+        if self.armed:
+            return
+
         self.armed = True
         self.arm_led.on()
         self.motion_sensor.add_observer(self.activity_sensor)
@@ -168,6 +171,9 @@ class KCam(object):
         LOG.warning('armed')
 
     def disarm(self):
+        if not self.armed:
+            return
+
         self.armed = False
         self.arm_led.off()
         self.motion_sensor.delete_observer(self.activity_sensor)
@@ -194,13 +200,12 @@ class KCam(object):
     def handle_arm_button(self, pressed):
         LOG.debug('arm button pressed when %s',
                   'armed' if self.armed else 'not armed')
-        if pressed and not self.armed:
+        if pressed:
             self.arm()
 
     def handle_arm_key(self, key):
         LOG.debug('arm key %s pressed', key)
-        if not self.armed:
-            self.arm()
+        self.arm()
 
     def check_arm_state(self):
         try:
