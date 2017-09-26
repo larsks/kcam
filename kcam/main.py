@@ -10,6 +10,7 @@ from RPi import GPIO
 from kcam.camera import Camera
 from kcam.defaults import DEFAULTS
 from kcam.devices.blink import Blink
+from kcam.devices.buzzer import Buzzer
 from kcam.devices.keypad import Keypad
 from kcam.devices.led import LED
 from kcam.metrics import MetricConnection
@@ -20,6 +21,7 @@ from kcam.tasks import (EncodeVideo,
                         GenerateThumbnails,
                         UpdateEventHTML,
                         UpdateEventListHTML)
+from kcam.tunes import TUNE_ARMED, TUNE_DISARMED, TUNE_ERROR
 from kcam.util import date_from_path
 
 LOG = logging.getLogger(__name__)
@@ -33,6 +35,7 @@ class KCam(object):
         'camera',
         'pins',
         'keypad',
+        'buzzer',
         'sensor:motion',
         'sensor:door',
         'sensor:activity',
@@ -47,6 +50,7 @@ class KCam(object):
         self.create_taskmanager()
         self.create_leds()
         self.create_buttons()
+        self.create_buzzer()
         self.create_metrics()
         self.create_sensors()
         self.create_camera()
@@ -56,6 +60,14 @@ class KCam(object):
         for section in self.required_sections:
             if section not in self.config:
                 self.config.add_section(section)
+
+    def create_buzzer(self):
+        if self.config['buzzer'].getboolean('buzzer_enable'):
+            self.buzzer = Buzzer(
+                self.config.getint('pins', 'buzzer_pin'),
+            )
+        else:
+            self.buzzer = Buzzer(None)
 
     def create_taskmanager(self):
         self.postprocess = TaskManager()
@@ -146,12 +158,14 @@ class KCam(object):
         self.armed = True
         self.arm_led.on()
         self.motion_sensor.add_observer(self.activity_sensor)
+        self.buzzer.play(TUNE_ARMED)
         LOG.warning('armed')
 
     def disarm(self):
         self.armed = False
         self.arm_led.off()
         self.motion_sensor.delete_observer(self.activity_sensor)
+        self.buzzer.play(TUNE_DISARMED)
         LOG.warning('disarmed')
 
     def handle_passcode_attempt(self, passcode):
@@ -161,6 +175,7 @@ class KCam(object):
             LOG.info('received correct passcode')
             self.toggle_armed()
         else:
+            self.buzzer.play(TUNE_ERROR)
             LOG.error('received incorrect passcode')
 
     def toggle_armed(self):

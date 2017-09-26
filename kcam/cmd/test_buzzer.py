@@ -1,5 +1,5 @@
 import logging
-import threading
+import time
 
 from kcam.common import Application
 from kcam.devices.buzzer import Buzzer
@@ -26,6 +26,12 @@ class TestBuzzerApplication(Application):
 
         g = p.add_argument_group('Buzzer options')
         g.add_argument('--pin')
+        g.add_argument('--iterations',
+                       default=1,
+                       type=int)
+        g.add_argument('--delay',
+                       default=1.0,
+                       type=float)
 
         p.add_argument('notes', nargs='*')
 
@@ -35,15 +41,12 @@ class TestBuzzerApplication(Application):
         self.buzzer = Buzzer(
             pin=self.config.getint('pins', 'buzzer_pin'),
         )
-        self.buzzer.add_observer(self)
-        self.done_playing = threading.Event()
 
-        self.buzzer.start()
-
-        noteiter = iter(self.args.notes)
-        notes = zip(noteiter, noteiter)
-        self.buzzer.play(notes)
-        self.done_playing.wait()
+        for i in range(self.args.iterations):
+            noteiter = iter(self.args.notes)
+            notes = zip(noteiter, noteiter)
+            self.buzzer.play(notes)
+            time.sleep(self.args.delay)
 
     def update(self, arg):
         print('tune finished!')

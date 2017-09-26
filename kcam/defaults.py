@@ -10,4 +10,5 @@ DEFAULTS = dict(
     motion_pin='23',
     temperature_pin='12',
     keypad_grab='true',
+    buzzer_enable='true',
 )

@@ -1,34 +1,22 @@
 import logging
-import queue
-import threading
 import time
 
 from RPi import GPIO
 
-from kcam import observer
-
 LOG = logging.getLogger(__name__)
 
 
-class Buzzer(observer.Observable, threading.Thread):
+class Buzzer(object):
 
     def __init__(self, pin, init_val=0, **kwargs):
-        super(Buzzer, self).__init__(daemon=True, **kwargs)
+        super(Buzzer, self).__init__(**kwargs)
 
-        self.pin = int(pin)
-        GPIO.setup(pin, GPIO.OUT)
-        GPIO.output(pin, init_val)
-        self.q = queue.Queue()
-
-    def play(self, tune):
-        self.q.put(tune)
-
-    def run(self):
-        LOG.debug('started buzzer thread')
-        while True:
-            tune = self.q.get()
-            LOG.debug('received tune: %s', tune)
-            self.play_tune(tune)
+        if pin is not None:
+            self.pin = int(pin)
+            GPIO.setup(pin, GPIO.OUT)
+            GPIO.output(pin, init_val)
+        else:
+            self.pin = None
 
     def play_tone(self, pitch, duration):
         pitch, duration = float(pitch), float(duration)
@@ -41,13 +29,12 @@ class Buzzer(observer.Observable, threading.Thread):
         delay = period / 2
         cycles = int(duration * pitch)
 
-        p = GPIO.PWM(self.pin, pitch)
-        p.start(0.5)
-        time.sleep(duration)
-        p.stop()
+        if self.pin is not None:
+            p = GPIO.PWM(self.pin, pitch)
+            p.start(0.5)
+            time.sleep(duration)
+            p.stop()
 
-    def play_tune(self, tune):
+    def play(self, tune):
         for pitch, duration in tune:
             self.play_tone(pitch, duration)
-
-        self.notify_observers(None)
