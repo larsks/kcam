@@ -12,7 +12,6 @@ DEFAULTS = dict(
     door_pin='4',
     motion_pin='23',
     temperature_pin='12',
-    keypad_grab='true',
     buzzer_pwm_path='/sys/class/pwm/pwmchip0/pwm1',
     buzzer_enable='true',
 )

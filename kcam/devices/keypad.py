@@ -42,6 +42,7 @@ class Keypad(observer.Observable, threading.Thread):
 
     default_timeout = 10
     default_device = '/dev/input/event0'
+    default_grab = True
 
     def __init__(self,
                  device=None,
@@ -66,6 +67,7 @@ class Keypad(observer.Observable, threading.Thread):
 
         LOG.info('using input device %s', self.device)
 
+        grab = grab if grab is not None else self.default_grab
         if grab:
             self.device.grab()
 
@@ -85,10 +87,6 @@ class Keypad(observer.Observable, threading.Thread):
         for event in self.device.read_loop():
             if event.type == evdev.ecodes.EV_KEY:
                 this_event = time.time()
-                if this_event - last_event > self.timeout:
-                    LOG.debug('keypad timeout; clearing buffer')
-                    self.acc = []
-
                 key = evdev.categorize(event)
 
                 LOG.debug('keycode event for %s %s',
@@ -98,6 +96,10 @@ class Keypad(observer.Observable, threading.Thread):
                 # only handle key-up events
                 if key.keystate:
                     continue
+
+                if this_event - last_event > self.timeout:
+                    LOG.debug('keypad timeout; clearing buffer')
+                    self.acc = []
 
                 if key.keycode in self.keys:
                     self.keys[key.keycode].notify_observers()
