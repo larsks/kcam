@@ -1,4 +1,10 @@
 ---
+- name: enable kernel pwm support
+  lineinefile:
+    state: present
+    path: /boot/config.txt
+    line: "dtoverlay=pwm-2chan"
+
 - name: install rpi-configure-pwm service
   template:
     src: "{{ item }}"
