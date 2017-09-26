@@ -56,6 +56,8 @@ class KCam(object):
         self.create_camera()
         self.create_keypad()
 
+        self.statefile = Path(self.config.get('DEFAULT', 'statefile'))
+
     def init_config(self):
         for section in self.required_sections:
             if section not in self.config:
@@ -159,6 +161,7 @@ class KCam(object):
         self.arm_led.on()
         self.motion_sensor.add_observer(self.activity_sensor)
         self.buzzer.play(TUNE_ARMED)
+        self.update_arm_state()
         LOG.warning('armed')
 
     def disarm(self):
@@ -166,6 +169,7 @@ class KCam(object):
         self.arm_led.off()
         self.motion_sensor.delete_observer(self.activity_sensor)
         self.buzzer.play(TUNE_DISARMED)
+        self.update_arm_state()
         LOG.warning('disarmed')
 
     def handle_passcode_attempt(self, passcode):
@@ -195,10 +199,26 @@ class KCam(object):
         if not self.armed:
             self.arm()
 
+    def check_arm_state(self):
+        try:
+            with self.statefile.open('r') as fd:
+                state = fd.read()
+        except FileNotFoundError:
+            state = None
+
+        return state == 'armed'
+
+    def update_arm_state(self):
+        with self.statefile.open('w') as fd:
+            fd.write('armed' if self.armed else 'disarmed')
+
     def run(self):
         LOG.info('kcam starting up')
         for thread in self.threads:
             thread.start()
+
+        if self.check_arm_state():
+            self.arm()
 
         LOG.info('kcam startup complete')
         try:

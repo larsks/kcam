@@ -1,5 +1,9 @@
+import os
+from pathlib import Path
+
 DEFAULTS = dict(
     datadir='.',
+    statefile=str(Path(os.environ['HOME']) / '.kcam_arm_state'),
     det_led_pin='24',
     act_led_pin='25',
     pwr_led_pin='27',
