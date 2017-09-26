@@ -67,15 +67,27 @@ class Buzzer(object):
 
     def set_period(self, period, duty_cycle=0.5):
         '''Set pwm period (specified in ns)'''
+        LOG.debug('set_period period=%s, duty_cycle=%s',
+                  period, duty_cycle)
 
         period_bytes = bytes('%s' % int(period), 'ascii')
 
-        self.set_duty_cycle(0, 0)
+        try:
+            # try to reset duty_cycle, but ignore any errors (which
+            # probably mean both period and duty_cycle were already
+            # 0)
+            self.set_duty_cycle(0, 0)
+        except OSError:
+            pass
+
         with (self.pwm / 'period').open('wb') as fd:
             fd.write(period_bytes)
         self.set_duty_cycle(period, duty_cycle)
 
     def set_duty_cycle(self, period, duty_cycle=0.5):
+        LOG.debug('set_duty_cycle period=%s, duty_cycle=%s',
+                  period, duty_cycle)
+
         if duty_cycle > 1 or duty_cycle < 0:
             raise ValueError('0 <= duty_cycle <= 1')
 
