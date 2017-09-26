@@ -2,7 +2,11 @@ import argparse
 import configparser
 import logging
 
+from RPi import GPIO
+
 from kcam.defaults import DEFAULTS
+
+GPIO.setmode(GPIO.BCM)
 
 
 def KeyValueArgument(value):
