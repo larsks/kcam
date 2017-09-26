@@ -91,11 +91,13 @@ class Keypad(observer.Observable, threading.Thread):
 
                 key = evdev.categorize(event)
 
+                LOG.debug('keycode event for %s %s',
+                          key.keycode,
+                          'down' if key.keystate else 'up')
+
                 # only handle key-up events
                 if key.keystate:
                     continue
-
-                LOG.debug('keycode event for %s', key.keycode)
 
                 if key.keycode in self.keys:
                     self.keys[key.keycode].notify_observers()

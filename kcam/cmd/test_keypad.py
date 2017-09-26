@@ -37,7 +37,6 @@ class TestKeypadApplication(Application):
         self.keypad = Keypad(
             device=self.config['keypad'].get('keypad_device'),
             device_name=self.config['keypad'].get('keypad_device_name'),
-            passcode=self.config['keypad'].get('passcode')
         )
 
         arm_key = self.config['keypad'].get('keypad_arm_key')
@@ -54,8 +53,8 @@ class TestKeypadApplication(Application):
     def handle_arm_key(self, key):
         LOG.warning('arm key was pressed!')
 
-    def handle_passcode(self, correct):
-        LOG.warning('passcode result: %s', correct)
+    def handle_passcode(self, passcode):
+        LOG.warning('received passcode: %s', passcode)
 
 app = TestKeypadApplication()
 
