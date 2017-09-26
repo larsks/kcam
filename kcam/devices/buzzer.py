@@ -41,11 +41,10 @@ class Buzzer(observer.Observable, threading.Thread):
         delay = period / 2
         cycles = int(duration * pitch)
 
-        for i in range(cycles):
-            GPIO.output(self.pin, True)
-            time.sleep(delay)
-            GPIO.output(self.pin, False)
-            time.sleep(delay)
+        p = GPIO.PWM(self.pin, pitch)
+        p.start(0.5)
+        time.sleep(duration)
+        p.stop()
 
     def play_tune(self, tune):
         for pitch, duration in tune:
