@@ -64,12 +64,10 @@ class KCam(object):
                 self.config.add_section(section)
 
     def create_buzzer(self):
-        if self.config['buzzer'].getboolean('buzzer_enable'):
-            self.buzzer = Buzzer(
-                self.config.getint('pins', 'buzzer_pin'),
-            )
-        else:
-            self.buzzer = Buzzer(None)
+        self.buzzer = Buzzer(
+            self.config.get('buzzer', 'buzzer_pwm_path'),
+            enable=self.config['buzzer'].getboolean('buzzer_enable'),
+        )
 
     def create_taskmanager(self):
         self.postprocess = TaskManager()

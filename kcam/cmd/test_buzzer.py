@@ -10,13 +10,14 @@ LOG = logging.getLogger(__name__)
 class TestBuzzerApplication(Application):
     def required_config_sections(self):
         sections = super(TestBuzzerApplication, self).required_config_sections()
-        return sections + ['pins']
+        return sections + ['buzzer']
 
     def create_overrides(self):
         overrides = super(TestBuzzerApplication, self).create_overrides()
 
         overrides.update({
-            'pin': ('pins', 'buzzer_pin'),
+            'pwm': ('buzzer', 'buzzer_pwm_path'),
+            'enable': ('buzzer', 'buzzer_enable'),
         })
 
         return overrides
@@ -25,7 +26,11 @@ class TestBuzzerApplication(Application):
         p = super(TestBuzzerApplication, self).create_parser()
 
         g = p.add_argument_group('Buzzer options')
-        g.add_argument('--pin')
+        g.add_argument('--pwm')
+        g.add_argument('--disable',
+                       action='store_const',
+                       const='false',
+                       dest='enable')
         g.add_argument('--iterations',
                        default=1,
                        type=int)
@@ -39,7 +44,8 @@ class TestBuzzerApplication(Application):
 
     def main(self):
         self.buzzer = Buzzer(
-            pin=self.config.getint('pins', 'buzzer_pin'),
+            pwm=self.config.get('buzzer', 'buzzer_pwm_path'),
+            enable=self.config.getboolean('buzzer', 'buzzer_enable'),
         )
 
         for i in range(self.args.iterations):
