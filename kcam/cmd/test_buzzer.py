@@ -3,6 +3,7 @@ import time
 
 from kcam.common import Application
 from kcam.devices.buzzer import Buzzer
+from kcam import tunes
 
 LOG = logging.getLogger(__name__)
 
@@ -47,6 +48,10 @@ class TestBuzzerApplication(Application):
             pwm=self.config.get('buzzer', 'buzzer_pwm_path'),
             enable=self.config.getboolean('buzzer', 'buzzer_enable'),
         )
+
+        if len(self.args.notes) == 1:
+            self.args.notes = getattr(tunes,
+                                      self.args.notes[0].upper())
 
         for i in range(self.args.iterations):
             noteiter = iter(self.args.notes)

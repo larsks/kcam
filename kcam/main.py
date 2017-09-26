@@ -21,12 +21,17 @@ from kcam.tasks import (EncodeVideo,
                         GenerateThumbnails,
                         UpdateEventHTML,
                         UpdateEventListHTML)
-from kcam.tunes import TUNE_ARMED, TUNE_DISARMED, TUNE_ERROR
+from kcam import tunes
 from kcam.util import date_from_path
 
 LOG = logging.getLogger(__name__)
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
+
+
+def pairs(l):
+    iterl = iter(l)
+    return zip(iterl, iterl)
 
 
 class KCam(object):
@@ -158,7 +163,7 @@ class KCam(object):
         self.armed = True
         self.arm_led.on()
         self.motion_sensor.add_observer(self.activity_sensor)
-        self.buzzer.play(TUNE_ARMED)
+        self.buzzer.play(pairs(tunes.TUNE_ARMED))
         self.update_arm_state()
         LOG.warning('armed')
 
@@ -166,7 +171,7 @@ class KCam(object):
         self.armed = False
         self.arm_led.off()
         self.motion_sensor.delete_observer(self.activity_sensor)
-        self.buzzer.play(TUNE_DISARMED)
+        self.buzzer.play(pairs(tunes.TUNE_DISARMED))
         self.update_arm_state()
         LOG.warning('disarmed')
 
@@ -177,7 +182,7 @@ class KCam(object):
             LOG.info('received correct passcode')
             self.toggle_armed()
         else:
-            self.buzzer.play(TUNE_ERROR)
+            self.buzzer.play(pairs(tunes.TUNE_ERROR))
             LOG.error('received incorrect passcode')
 
     def toggle_armed(self):

@@ -1,7 +1,3 @@
-TUNE_ARMED = [
-    (261.63, 0.2), (329.63, 0.2), (392.00, 0.2)
-]
-
-TUNE_DISARMED = list(reversed(TUNE_ARMED))
-
-TUNE_ERROR = [(220, 0.5)]
+TUNE_ARMED = '261 0.2 0 0.01 261 0.2 0 0.01 349.2 0.2'.split()
+TUNE_DISARMED = '349.2 0.2 0 0.01 349.2 0.2 0 0.01 261 0.2'.split()
+TUNE_ERROR = '261 0.2 0 0.01 220 0.2 0 0.01 73.42 0.5'.split()
