@@ -1,0 +1,9 @@
+[Unit]
+Description=Configure permissions for %I
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/rpi-configure-pwm %i
+
+[Install]
+WantedBy=multi-user.target

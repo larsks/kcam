@@ -1,0 +1,16 @@
+---
+- name: install rpi-configure-pwm service
+  template:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+  with_items:
+    - rpi-configure-pwm@.service
+  notify: reload systemd
+
+- name: install rpi-configure-pwm script
+  template:
+    src: rpi-configure-pwm
+    dest: /usr/bin/rpi-configure-pwm
+    mode: 0755
+
+- meta: flush_handlers

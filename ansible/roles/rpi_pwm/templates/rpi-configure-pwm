@@ -1,0 +1,14 @@
+#!/bin/sh
+
+PWMPATH=/sys/class/pwm/pwmchip0
+PWM=$1
+
+if [ -z "$PWM" ]; then
+	echo "ERROR: you must provide a pwm (0, 1)" >&2
+	exit 1
+fi
+
+
+echo $PWM > ${PWMPATH}/export
+chown -R root:gpio $PWMPATH/pwm${PWM}
+chmod -R g+rwX $PWMPATH/pwm${PWM}

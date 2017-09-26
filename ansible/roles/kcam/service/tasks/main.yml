@@ -6,14 +6,7 @@
   with_items:
     - kcam.service
     - kcam-tempd.service
-    - kcam-configure-pwm.service
   notify: reload systemd
-
-- name: install kcam-configure-pwm script
-  template:
-    src: kcam-configure-pwm
-    dest: /usr/bin/kcam-configure-pwm
-    mode: 0755
 
 - meta: flush_handlers
 
@@ -25,6 +18,6 @@
     state: running
     enabled: true
   with_items:
+    - rpi-configure-pwm@1
     - kcam
     - kcam-tempd
-    - kcam-configure-pwm

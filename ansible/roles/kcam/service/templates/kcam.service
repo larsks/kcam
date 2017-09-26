@@ -1,6 +1,6 @@
 [Unit]
 Description=Kcam service
-After=network.target
+After=network.target rpi-configure-pwm@1.service
 
 [Service]
 Type=simple
