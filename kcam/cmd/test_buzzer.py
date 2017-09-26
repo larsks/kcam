@@ -35,7 +35,7 @@ class TestBuzzerApplication(Application):
                        default=1,
                        type=int)
         g.add_argument('--delay',
-                       default=1.0,
+                       default=0,
                        type=float)
 
         p.add_argument('notes', nargs='*')

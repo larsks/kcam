@@ -35,37 +35,62 @@ class Buzzer(object):
 
         LOG.info('created buzzer on %s', self.pwm)
 
-    def play_tone(self, pitch, duration):
-        pitch, duration = float(pitch), float(duration)
-        LOG.debug('play %f for %f seconds', pitch, duration)
+    def play_tone(self, freq, duration):
+        '''Play a single tone using pwm'''
+        freq, duration = float(freq), float(duration)
+        LOG.debug('play %f for %f seconds', freq, duration)
 
-        if pitch == 0:
+        if freq == 0:
             time.sleep(duration)
             return
 
-        period = (1.0 / pitch) * 1e+9
-        duty_cycle = period / 2
+        self.set_frequency(freq)
+
+        try:
+            self.enable_output()
+            time.sleep(duration)
+        finally:
+            self.disable_output()
+
+    def enable_output(self):
+        '''Enable pwm output'''
+        if not self.enable:
+            return
+
+        with (self.pwm / 'enable').open('wb') as fd:
+            fd.write(b'1\n')
+
+    def disable_output(self):
+        '''Disable pwm output'''
+        with (self.pwm / 'enable').open('wb') as fd:
+            fd.write(b'0\n')
+
+    def set_period(self, period, duty_cycle=0.5):
+        '''Set pwm period (specified in ns)'''
 
         period_bytes = bytes('%s' % int(period), 'ascii')
-        duty_cycle_bytes = bytes('%s' % int(duty_cycle), 'ascii')
 
+        self.set_duty_cycle(0, 0)
         with (self.pwm / 'period').open('wb') as fd:
             fd.write(period_bytes)
+        self.set_duty_cycle(period, duty_cycle)
 
+    def set_duty_cycle(self, period, duty_cycle=0.5):
+        if duty_cycle > 1 or duty_cycle < 0:
+            raise ValueError('0 <= duty_cycle <= 1')
+
+        duty_cycle = duty_cycle * period
+        duty_cycle_bytes = bytes('%s' % int(duty_cycle), 'ascii')
         with (self.pwm / 'duty_cycle').open('wb') as fd:
             fd.write(duty_cycle_bytes)
 
-        try:
-            enable = b'1\n' if self.enable else b'0\n'
-            with (self.pwm / 'enable').open('wb') as fd:
-                fd.write(enable)
+    def set_frequency(self, freq, **kwargs):
+        '''Convert a frequency in Hz to a period in ns'''
 
-            time.sleep(duration)
-        finally:
-            with (self.pwm / 'enable').open('wb') as fd:
-                fd.write(b'0\n')
+        period = (1.0 / freq) * 1e+9
+        self.set_period(period, **kwargs)
 
     def play(self, tune):
         LOG.debug('play tune %s', tune)
-        for pitch, duration in tune:
-            self.play_tone(pitch, duration)
+        for freq, duration in tune:
+            self.play_tone(freq, duration)
